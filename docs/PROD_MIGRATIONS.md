@@ -1774,7 +1774,8 @@ d'un modèle (relances, séquences, envois) écrivent leurs heures à Paris et n
 | 1 | **Lire la production avant** | session de livraison | que le fuseau existe côté base : `select count(*) from pg_timezone_names where name = 'Europe/Paris'` doit rendre `1` ; et les espaces : `select slug from public.workspaces` |
 | 2 | Appliquer la 204 | session de livraison, dans la fenêtre du lot | `runProd.sh --migrate` (§3), après la 203 |
 | 3 | Relire | session de livraison | `select slug, timezone from public.workspaces` : tous à `Europe/Paris` ; `select to_char('2026-07-15 09:00+00'::timestamptz at time zone 'Europe/Paris', 'HH24:MI')` rend `11:00` |
-| 4 | Régler un espace qui n'est pas à Paris | le responsable, s'il y en a | `workspace_set_timezone(<espace>, '<fuseau IANA>')` sous le jeton de l'administrateur de l'espace (l'écran de T2 suit) |
+| 4 | Régler un espace qui n'est pas à Paris | le responsable, s'il y en a | l'écran **Réglages ▸ Fuseau horaire** (`INC-216` T2, livré avec la webapp du lot, sans migration), ou `workspace_set_timezone(<espace>, '<fuseau IANA>')` sous le jeton de l'administrateur de l'espace |
+| 5 | Constater l'écran | le responsable, après la livraison | ouvrir Réglages ▸ Fuseau horaire d'un espace : le champ porte le fuseau lu en base (`Europe/Paris` par défaut) et l'heure qu'il est dans ce fuseau |
 
 **Retour arrière** : rejouer, dans cet ordre, les définitions de la `0167` (`create or replace function public.rendre_modele_email` et
 `app.card_common_field_texte` à trois paramètres), puis `drop function app.card_common_field_texte(text, jsonb, jsonb, text)`,

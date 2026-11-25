@@ -5328,6 +5328,10 @@ d'un email sortant, puis la colonne et la migration correspondantes. L'assertion
 `supabase/tests/0054_rendu_modeles_emails.test.sql` **fige** le comportement actuel : la voir rougir
 signalera qu'un fuseau a été introduit sans réviser le §8.6.
 
+**CLOSE en développement le 2026-11-25 — INC-216 T1 et T2, session `p2enjoy-crm-dd`.** T1 (migration `0204`, décision 996) : `workspaces.timezone`, `workspace_set_timezone`, le rendu au fuseau de l'espace ; T2 (décision 1000) : l'écran Réglages ▸ Fuseau horaire,
+le journal d'audit, **le manuel corrigé** (§14.4 disait « UTC »). Preuves : pgTAP `0190` (31), API `fuseau-espace` (5), 20 tests de la couche, 16 de composant, 4 scénarios d'interface, `verify-manual.sh` 170 contrôles. **Reste, en production** : la livraison de la `0204` et de l'écran avec le lot
+(`docs/PROD_MIGRATIONS.md` §2.83) ; changement de comportement voulu à annoncer — les heures des e-mails rendus passent d'UTC à Paris.
+
 ### INC-217 — la preuve du job de relance exige un passage que `pg_cron` ne produit qu'à 03 h 23
 
 **Ouverte le 2026-08-25 par `CRM-063` tranche 2a, comportement inchangé** — constat **étranger à la

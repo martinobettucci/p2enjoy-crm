@@ -2277,6 +2277,22 @@
 			]
 		},
 		{
+			"fichier": "ecrire-des-modeles-d-emails-et-les-previsualiser/fuseau-horaire.jpg",
+			"largeur": 925,
+			"hauteur": 289,
+			"chapitre": "ecrire-des-modeles-d-emails-et-les-previsualiser",
+			"section": "le-fuseau-horaire-de-l-espace",
+			"pleinePage": false,
+			"libelles": [
+				"Enregistrer",
+				"Europe/Paris",
+				"Fuseau horaire",
+				"Fuseau horaire de l'espace",
+				"Il est 04:13 dans ce fuseau.",
+				"Les dates et heures écrites dans les e-mails de cet espace — la prochaine action, les champs « date et heure » — suivent ce fuseau. Les dates affichées à l'écran restent celles de votre navigateur."
+			]
+		},
+		{
 			"fichier": "ecrire-des-modeles-d-emails-et-les-previsualiser/modeles-d-emails.jpg",
 			"largeur": 1440,
 			"hauteur": 900,

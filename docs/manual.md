@@ -4206,16 +4206,39 @@ dit ce qui est perdu : « Le texte du modèle est définitivement perdu. »
 Il n'y a **pas de corbeille** pour un modèle : il ne contient aucun travail, c'est un texte. Une fois
 supprimé, il faut le réécrire.
 
-### 14.4 Ce qui n'est pas encore offert
+### 14.4 Le fuseau horaire de l'espace
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « Fuseau horaire ».
+
+![L'écran du fuseau horaire de l'espace : le champ « Fuseau horaire », l'heure qu'il est dans ce fuseau, et « Enregistrer »](manuel/images/ecrire-des-modeles-d-emails-et-les-previsualiser/fuseau-horaire.jpg)
+
+**À quoi cela sert.** Les heures qu'un modèle écrit dans un message — la **prochaine action** de l'affaire,
+`{{card.next_action_at}}`, et les champs de l'affaire de type « date et heure » — sont écrites à l'heure du **fuseau de
+l'espace de travail**, heure d'été comprise. Un espace neuf est à `Europe/Paris` : une échéance à 11:00 à Paris s'écrit
+11:00, et non 09:00 comme le faisait le temps universel. Un espace installé à Montréal choisit `America/Montreal`, et ses
+messages portent l'heure de Montréal.
+
+**Qui.** Tout membre de l'espace **lit** le fuseau. Le **régler** est réservé à l'administrateur de l'espace ; pour un
+autre rôle, le champ et « Enregistrer » restent visibles, grisés, et un bandeau dit pourquoi
+([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)).
+
+**Le régler.** Choisissez le fuseau dans la liste, rangée par région ; **tapez le début de son nom** pour y aller
+directement. Puis « Enregistrer ». Sous le champ, l'écran écrit l'heure qu'il est dans le fuseau choisi et, si votre
+appareil est dans un autre fuseau, l'écart entre les deux : de quoi vérifier d'un coup d'œil que `Europe/Paris` est bien
+ce que vous croyez. Rien n'est écrit avant « Enregistrer ». Le réglage vaut pour les messages écrits **ensuite** : un
+message déjà écrit garde son texte. Le changement est inscrit au journal d'audit de l'espace.
+
+**Ce que ce réglage ne change pas.** Les dates affichées à l'écran restent celles de votre appareil. Le récapitulatif
+quotidien par e-mail garde son heure d'envoi. La liste ne propose que les noms de fuseau les plus courants : le fuseau
+déjà réglé y figure toujours, même s'il porte un ancien nom, par exemple `America/Montreal`.
+
+### 14.5 Ce qui n'est pas encore offert
 
 - **Aucun envoi depuis cet écran.** La prévisualisation montre ; elle n'expédie rien. Un modèle part par une
   **séquence de relance** ([chapitre 16](#enchainer-des-relances-les-sequences)) ; le formulaire « Écrire un message »
   d'une affaire ne propose pas encore de partir d'un modèle.
 - **La signature** n'appartient pas au modèle : elle est celle de l'identité d'expédition, ajoutée à la fin de chaque
   message ([chapitre 15](#signer-les-messages-expedies-depuis-une-identite)).
-- **Les dates sont rendues en UTC.** Une échéance affichée « 16/08/2026 09:00 » dans un message est
-  exprimée en temps universel : le produit ne connaît pas encore le fuseau de votre espace de
-  travail. Un destinataire français lira donc 09:00 là où le rendez-vous est à 11:00 en heure d'été.
 
 ![Le bouton « Écrire un message » de la fiche d'une affaire, dont le formulaire ne part pas encore d'un modèle](manuel/images/ecrire-des-modeles-d-emails-et-les-previsualiser/ecrire-un-message.jpg)
 

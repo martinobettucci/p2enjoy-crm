@@ -80,6 +80,9 @@ export function ReglagesFuseauEspace({ client = clientCrm }: ProprietesReglagesF
 	const [annonce, setAnnonce] = useState('')
 	const rang = useRef(0)
 	const champ = useRef<HTMLSelectElement | null>(null)
+	const bouton = useRef<HTMLButtonElement | null>(null)
+	/** Le focus revient à la commande une fois réactivée : désactivée pendant l'envoi, elle le perd au profit du document (§5.63). */
+	const focusAuBouton = useRef(false)
 
 	useEffect(() => {
 		if (client === null || idWorkspace === null) return
@@ -95,6 +98,12 @@ export function ReglagesFuseauEspace({ client = clientCrm }: ProprietesReglagesF
 			setChoix(lu.donnees)
 		})
 	}, [client, idWorkspace, tentative])
+
+	useEffect(() => {
+		if (enCours || !focusAuBouton.current) return
+		focusAuBouton.current = false
+		bouton.current?.focus()
+	}, [enCours])
 
 	const fuseauChoisi = choix ?? (lecture.statut === 'pret' ? lecture.fuseau : null)
 	const groupes = useMemo(
@@ -115,6 +124,7 @@ export function ReglagesFuseauEspace({ client = clientCrm }: ProprietesReglagesF
 		const issue = await reglerFuseauEspace(client, idWorkspace, fuseauChoisi)
 		setEnCours(false)
 		if (issue.statut === 'applique') {
+			focusAuBouton.current = true
 			setAnnonce(t('admin.timezone.saved', { fuseau: fuseauChoisi }))
 			setTentative((n) => n + 1)
 			return
@@ -206,6 +216,7 @@ export function ReglagesFuseauEspace({ client = clientCrm }: ProprietesReglagesF
 					<div className="flex flex-wrap items-center gap-2">
 						{/* La seule commande : une fonction, deux paramètres (§5.34). Jamais éteinte par l'état du champ (§5.3 ter). */}
 						<Button
+							ref={bouton}
 							variante="primaire"
 							type="submit"
 							data-testid="enregistrer-fuseau"

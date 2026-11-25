@@ -822,11 +822,267 @@
 		{
 			"type": "heading",
 			"level": 3,
+			"anchor": "le-fuseau-horaire-de-l-espace",
+			"content": [
+				{
+					"type": "text",
+					"text": "14.4 Le fuseau horaire de l'espace"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ « Fuseau horaire »."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "ecrire-des-modeles-d-emails-et-les-previsualiser/fuseau-horaire.jpg",
+			"alt": "L'écran du fuseau horaire de l'espace : le champ « Fuseau horaire », l'heure qu'il est dans ce fuseau, et « Enregistrer »",
+			"width": 925,
+			"height": 289
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "À quoi cela sert."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les heures qu'un modèle écrit dans un message — la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prochaine action"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'affaire,\n"
+				},
+				{
+					"type": "code",
+					"text": "{{card.next_action_at}}"
+				},
+				{
+					"type": "text",
+					"text": ", et les champs de l'affaire de type « date et heure » — sont écrites à l'heure du "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "fuseau de\nl'espace de travail"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", heure d'été comprise. Un espace neuf est à "
+				},
+				{
+					"type": "code",
+					"text": "Europe/Paris"
+				},
+				{
+					"type": "text",
+					"text": " : une échéance à 11:00 à Paris s'écrit\n11:00, et non 09:00 comme le faisait le temps universel. Un espace installé à Montréal choisit "
+				},
+				{
+					"type": "code",
+					"text": "America/Montreal"
+				},
+				{
+					"type": "text",
+					"text": ", et ses\nmessages portent l'heure de Montréal."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Tout membre de l'espace "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "lit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le fuseau. Le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "régler"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " est réservé à l'administrateur de l'espace ; pour un\nautre rôle, le champ et « Enregistrer » restent visibles, grisés, et un bandeau dit pourquoi\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le régler."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Choisissez le fuseau dans la liste, rangée par région ; "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tapez le début de son nom"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " pour y aller\ndirectement. Puis « Enregistrer ». Sous le champ, l'écran écrit l'heure qu'il est dans le fuseau choisi et, si votre\nappareil est dans un autre fuseau, l'écart entre les deux : de quoi vérifier d'un coup d'œil que "
+				},
+				{
+					"type": "code",
+					"text": "Europe/Paris"
+				},
+				{
+					"type": "text",
+					"text": " est bien\nce que vous croyez. Rien n'est écrit avant « Enregistrer ». Le réglage vaut pour les messages écrits "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ensuite"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : un\nmessage déjà écrit garde son texte. Le changement est inscrit au journal d'audit de l'espace."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que ce réglage ne change pas."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les dates affichées à l'écran restent celles de votre appareil. Le récapitulatif\nquotidien par e-mail garde son heure d'envoi. La liste ne propose que les noms de fuseau les plus courants : le fuseau\ndéjà réglé y figure toujours, même s'il porte un ancien nom, par exemple "
+				},
+				{
+					"type": "code",
+					"text": "America/Montreal"
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
 			"anchor": "ce-qui-n-est-pas-encore-offert",
 			"content": [
 				{
 					"type": "text",
-					"text": "14.4 Ce qui n'est pas encore offert"
+					"text": "14.5 Ce qui n'est pas encore offert"
 				}
 			]
 		},
@@ -916,26 +1172,6 @@
 							{
 								"type": "text",
 								"text": ")."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Les dates sont rendues en UTC."
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " Une échéance affichée « 16/08/2026 09:00 » dans un message est\nexprimée en temps universel : le produit ne connaît pas encore le fuseau de votre espace de\ntravail. Un destinataire français lira donc 09:00 là où le rendez-vous est à 11:00 en heure d'été."
 							}
 						]
 					}

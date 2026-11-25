@@ -39,8 +39,11 @@ d'exécuter le code attendu.
 - **INC-216 T1, le fuseau de l'espace : les horodatages d'un e-mail se rendent à l'heure de l'espace** (migration 204, décisions 992 et
   996) : `workspaces.timezone` (`Europe/Paris` par défaut, validé), réglé par l'administrateur de l'espace ou un superadministrateur
   (`workspace_set_timezone`, refus en base) ; `card.next_action_at` et les champs communs « date et heure » d'un modèle d'e-mail se
-  rendent à ce fuseau, et non plus en UTC. L'écran de réglage (T2) suit ; en attendant, le fuseau se règle par l'API. « Studio Lumen »
+  rendent à ce fuseau, et non plus en UTC. « Studio Lumen »
   est seedé à `America/Montreal`.
+- **INC-216 T2, l'écran « Fuseau horaire » des Réglages** (décision 1000) : un administrateur lit et règle le fuseau de son espace sans passer par l'API ; la liste est celle du navigateur, rangée
+  par région (le fuseau déjà réglé y figure toujours), l'heure qu'il est dans le fuseau choisi et l'écart avec l'appareil s'écrivent sous le champ, tout membre lit, les autres voient champ et commande
+  grisés avec le motif. Le journal d'audit nomme « fuseau horaire ». **Le manuel** (§14.4) dit désormais que les heures des messages suivent le fuseau de l'espace — il disait encore « UTC ».
 - **INC-165, une migration ne se pousse plus sans ses types** (décision 992) : le crochet `pre-push` refuse un commit qui ajoute ou modifie
   une migration de `supabase/migrations/` sans modifier `webapp/src/lib/database.types.ts` dans le même commit, sauf si la migration porte le
   commentaire `-- sans effet de types : <motif>`. Outillage de développement : rien ne change dans le produit livré.

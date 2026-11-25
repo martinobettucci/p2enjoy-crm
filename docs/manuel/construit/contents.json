@@ -490,8 +490,12 @@
 					"title": "14.3 Supprimer un modèle"
 				},
 				{
+					"anchor": "le-fuseau-horaire-de-l-espace",
+					"title": "14.4 Le fuseau horaire de l'espace"
+				},
+				{
 					"anchor": "ce-qui-n-est-pas-encore-offert",
-					"title": "14.4 Ce qui n'est pas encore offert"
+					"title": "14.5 Ce qui n'est pas encore offert"
 				}
 			]
 		},
