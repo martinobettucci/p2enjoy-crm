@@ -63,6 +63,9 @@
 # @spec CRM-165 (docs/BACKLOG.md) — tranche T3 : les consignes de la plateforme, écrites par Sabine par la vraie fonction et
 #       sous son jeton, pour que l'onglet « Connecteur MCP » montre un texte, son auteur et sa date (docs/SPEC-seed.md §56 ;
 #       docs/SPEC-mcp.md §18.6)
+# @spec INC-216 (docs/BACKLOG.md) — tranche T1 : « Studio Lumen » reçoit son fuseau par la vraie fonction, sous le jeton de son
+#       administratrice, pour que le rendu d'un e-mail y diffère de celui de l'espace principal (docs/SPEC-seed.md §57 ;
+#       docs/SPEC-modeles-emails.md §8.6 bis)
 #
 # Applique le seed socle sur la pile de développement en cours d'exécution.
 #
@@ -7161,3 +7164,18 @@ attendu "$(api_jeton "$JETON_CONSIGNES" POST /rest/v1/rpc/platform_set_connector
 	from public.connector_instructions")" = "t" ] \
 	|| die "les consignes de la plateforme n'ont pas leur texte ou leur auteur (§56)."
 info "Consignes de la plateforme : trois consignes d'usage, écrites par Sabine — docs/SPEC-seed.md §56"
+
+# --- §57. Le fuseau de « Studio Lumen » — INC-216, docs/SPEC-seed.md §57 --------------------------------------------------
+# Par la VRAIE fonction, sous le jeton de l'administratrice de l'espace (Camille administre « Studio Lumen », §54). Rejouable : le
+# même fuseau réécrit ne change aucune colonne, donc n'écrit aucune ligne de journal (le déclencheur d'audit se tait). L'espace
+# principal garde le défaut, `Europe/Paris`.
+JETON_FUSEAU=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_FUSEAU" ] || die "connexion de l'administratrice impossible : le §57 règle le fuseau de « Studio Lumen » sous son jeton."
+attendu "$(api_jeton "$JETON_FUSEAU" POST /rest/v1/rpc/workspace_set_timezone \
+	-d "$(jq -nc --arg w "$LUMEN_ID" '{p_workspace_id: $w, p_timezone: "America/Montreal"}')")" "fuseau de « Studio Lumen » (§57)" 200 204
+[ "$(psql_seed -c "select timezone from public.workspaces where id = '$LUMEN_ID'")" = "America/Montreal" ] \
+	|| die "« Studio Lumen » n'a pas son fuseau (§57)."
+[ "$(psql_seed -c "select timezone from public.workspaces where id = '$WS_ID'")" = "Europe/Paris" ] \
+	|| die "l'espace principal doit garder son fuseau par défaut, Europe/Paris (§57)."
+info "Fuseaux : « Studio Lumen » à America/Montreal, l'espace principal à Europe/Paris — docs/SPEC-seed.md §57"
+

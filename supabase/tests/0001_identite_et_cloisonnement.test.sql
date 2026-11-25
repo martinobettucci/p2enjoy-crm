@@ -53,9 +53,10 @@ select columns_are(
 );
 
 -- RÉVISÉE PAR `CRM-123` (migration `0144`) : le préfixe des adresses d'affaire est une colonne de l'espace.
+-- RÉVISÉE PAR INC-216 (migration `0204`, décision 996) : le fuseau des e-mails de l'espace en est une autre (`docs/SCHEMA.md`).
 select columns_are(
 	'public', 'workspaces',
-	array['id', 'name', 'slug', 'inbound_domain', 'card_address_prefix', 'settings', 'created_at', 'updated_at'],
+	array['id', 'name', 'slug', 'inbound_domain', 'card_address_prefix', 'timezone', 'settings', 'created_at', 'updated_at'],
 	'`workspaces` porte exactement les colonnes de docs/SCHEMA.md §1'
 );
 

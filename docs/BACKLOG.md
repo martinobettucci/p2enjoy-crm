@@ -21004,10 +21004,13 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 *Le fuseau d'un e-mail sortant est celui de l'espace. Spécification : décisions 992 et 996 ; `docs/SPEC-modeles-emails.md` §8.6 bis ;
 `docs/SCHEMA.md` `workspaces`. Connecteur MCP : question 1 = non ; question 2 = sans objet.*
 
-- [@] **T1 — la base** : migration (colonne `workspaces.timezone`, `app.is_valid_timezone`, `workspace_set_timezone`, `rendre_modele_email` rend les deux
-      variables horodatées au fuseau de l'espace), seed (un espace au fuseau différent, par la vraie fonction), pgTAP, preuves d'API (refus de l'espace
-      voisin et du lecteur, fuseau inconnu), `0054` révisée, contrat de déploiement, SCHEMA, DAT, changelog.
-      *Prise en charge : p2enjoy-crm-dd depuis 2026-11-25 00:55 UTC — état avant : [ ]*
+- [P] **T1 — la base** : migration `0204` (colonne `workspaces.timezone`, `app.is_valid_timezone`, `workspace_set_timezone`, `rendre_modele_email`
+      et `card_common_field_texte` au fuseau de l'espace, trigger d'audit), seed §57 (« Studio Lumen » à `America/Montreal`, par la vraie
+      fonction), pgTAP `0190` (31 assertions : le défaut, la validation, qui règle et qui est refusé EN BASE, le journal, l'heure d'été et d'hiver à
+      Paris et à Montréal, un champ `datetime`, l'index de recherche resté en UTC), `0054` et `0001` révisées (décision 51), preuve d'API
+      `fuseau-espace` (5/5 : refus de la lectrice, du non-membre, de l'anonyme et de l'espace inconnu — le même refus ; fuseau inconnu refusé par la
+      fonction et par la contrainte ; journal d'audit, réécriture sans trace), `scripts/verify-rendu-modeles-emails.sh` qui lit la vraie sortie du
+      rendu, `database.types.ts` régénéré (`types:check` vert), contrat §2.83. **Reste, en production** : la livraison de la 204 et le constat du §2.83.
 - [ ] **T2 — l'écran** : le fuseau de l'espace se lit et se règle dans les Réglages de l'espace (administrateur seulement), avec ses états, ses refus,
       son annonce ; design system lu en entier, manuel et captures. Spécifié avant son code.
 

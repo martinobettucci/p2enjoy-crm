@@ -3465,3 +3465,12 @@ assistant de démonstration le reçoive :
 - **rejouable** : le même texte réécrit n'écrit rien, et ne laisse aucune ligne de journal (§18.3) ;
 - **le socle** n'est pas posé par le seed : le service `mcp` le publie à son démarrage ; le contrôle du seed constate le texte,
   pas le socle.
+
+## 57. Le fuseau de « Studio Lumen » — `INC-216` (`docs/SPEC-modeles-emails.md` §8.6 bis)
+
+*Écrit le 2026-11-25, avant le code.* Pour que le fuseau de l'espace se démontre, et qu'un même modèle rende deux heures différentes dans deux espaces :
+- **« Studio Lumen »** reçoit `America/Montreal` par `workspace_set_timezone`, sous le jeton de **Camille** (`admin@p2enjoy.test`, son
+  administratrice, §54) — la vraie fonction, jamais un `update` ;
+- **l'espace principal** garde le défaut, `Europe/Paris` : il n'est ni réglé ni compté parmi les écarts ;
+- **rejouable** : le même fuseau réécrit ne change aucune colonne, donc le déclencheur d'audit n'écrit aucune ligne ;
+- **ordre** : la section est jouée après le §56, donc après la création de l'espace par le §54/§55.

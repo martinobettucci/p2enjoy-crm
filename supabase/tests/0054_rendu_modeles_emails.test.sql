@@ -20,7 +20,7 @@
 --    échantillon. Une assertion sur trois variables serait verte sur une carte de valeurs qui
 --    aurait perdu les neuf autres.
 --
--- 3. LES DEUX FORMATAGES du §8.6, dont l'horodatage EN UTC, qui est une limite nommée.
+-- 3. LES DEUX FORMATAGES du §8.6, dont l'horodatage AU FUSEAU DE L'ESPACE (§8.6 bis, INC-216 ; c'était une limite nommée en UTC).
 --
 -- 4. LES TROUS NULS ET LEUR INVENTAIRE — le cœur de la décision du §8.4 : la chaîne vide, le nom
 --    du trou, le tri, le dédoublonnage, et la variable ABSENTE du modèle qui n'est PAS listée.
@@ -217,9 +217,16 @@ select is(
 select is(
 	substring(pg_temp.corps('c0000000-0000-4000-8000-0000000000a1',
 	                        '5eed0000-0000-4000-8000-0000000000c2') from '5=([^ ]* [^ ]*) 6='),
-	(select to_char(cp.next_action_at, 'DD/MM/YYYY HH24:MI')
-	   from public.cards c join public.card_placements cp on cp.card_id = c.id where c.id = '5eed0000-0000-4000-8000-0000000000c2'),
-	'CRM-063 §8.6 — card.next_action_at rend JJ/MM/AAAA HH:MM en UTC, limite nommée');
+	-- RÉVISÉE PAR INC-216 (décision 996, décision 51) : la limite nommée — « en UTC, faute de fuseau » — est refermée. L'attendu se
+	-- dérive de la MÊME colonne que le rendu, et du fuseau de l'ESPACE de l'affaire ; ce que l'assertion prouve garde son objet entier
+	-- (le FORMAT `JJ/MM/AAAA HH:MM` et que le fuseau est celui de l'espace, non celui de la session). Le calcul des heures d'été et
+	-- d'hiver, lui, est éprouvé par `0190_fuseau_espace.test.sql`.
+	(select to_char(cp.next_action_at at time zone w.timezone, 'DD/MM/YYYY HH24:MI')
+	   from public.cards c
+	   join public.card_placements cp on cp.card_id = c.id
+	   join public.workspaces w on w.id = c.workspace_id
+	  where c.id = '5eed0000-0000-4000-8000-0000000000c2'),
+	'CRM-063 §8.6 bis — card.next_action_at rend JJ/MM/AAAA HH:MM au fuseau de l''espace (INC-216)');
 
 select is(
 	substring(pg_temp.corps('c0000000-0000-4000-8000-0000000000a1',

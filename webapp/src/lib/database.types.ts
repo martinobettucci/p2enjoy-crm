@@ -5351,6 +5351,7 @@ export type Database = {
           name: string
           settings: Json
           slug: string
+          timezone: string
           updated_at: string
         }
         Insert: {
@@ -5361,6 +5362,7 @@ export type Database = {
           name: string
           settings?: Json
           slug: string
+          timezone?: string
           updated_at?: string
         }
         Update: {
@@ -5371,6 +5373,7 @@ export type Database = {
           name?: string
           settings?: Json
           slug?: string
+          timezone?: string
           updated_at?: string
         }
         Relationships: []
@@ -6925,6 +6928,10 @@ export type Database = {
       wake_thread: {
         Args: { thread_key: string; workspace: string }
         Returns: boolean
+      }
+      workspace_set_timezone: {
+        Args: { p_timezone: string; p_workspace_id: string }
+        Returns: undefined
       }
     }
     Enums: {

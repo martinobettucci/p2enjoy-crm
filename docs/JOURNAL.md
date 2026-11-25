@@ -42461,3 +42461,14 @@ code existants ont imposé :
   par action ; le message de confirmation dit combien restent à valider.
 - **Connecteur MCP** : question 1 non, question 2 sans objet (décision 994).
 **Conséquence** : tranches `T1` (la fonction, la voie, les deux lectures, le simulateur), `T2` (l'écran), `T3` (le manuel, les captures, le contrat).
+
+### `INC-216` T1 — le fuseau de l'espace est écrit et prouvé
+
+*2026-11-25, session `p2enjoy-crm-dd`, suite de la décision 996.* **Fait** : la migration `0204`, le seed §57, les preuves (pgTAP `0190`, 31 assertions ; API
+`fuseau-espace`, 5/5), `0054` et `0001` révisées (décision 51), `verify-rendu-modeles-emails.sh` qui lit la vraie sortie du rendu.
+**Ce que la mesure a appris** : (1) le contrôle du harnais `verify-rendu-modeles-emails.sh` SIMULAIT le rendu par sa propre mise en forme en UTC — il ne voyait
+donc jamais le vrai rendu, et il ne pouvait pas rougir quand le produit a gagné un fuseau ; il est retourné sur la sortie réelle ; (2) une vérification de
+régression lancée pendant qu'une autre session recréait la base a rendu un verdict nul (une base vide) — le verrou de campagne ne couvre que les commandes qui
+l'appellent, et la reconstruction d'une autre session n'en faisait pas partie à ce moment ; la mesure a été rejouée une fois la base remontée ; (3) le journal
+d'audit de l'espace nomme la colonne `timezone` mais n'en recopie pas la valeur (`app.audit_configuration` ne le fait que pour sa liste courte) : acceptable pour T1,
+à reprendre si T2 veut afficher « de X à Y ». **Reste** : la livraison de la 204 et l'écran de T2.

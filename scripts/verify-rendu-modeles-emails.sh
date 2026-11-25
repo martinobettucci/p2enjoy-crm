@@ -335,27 +335,35 @@ else
 	fail "le rendu a deviné un contact — l'affaire en porte un, il ne doit pas le prendre"
 fi
 
-# LES DEUX FORMATAGES DU §8.6, mesurés séparément — l'horodatage en UTC est la limite INC-216.
+# LES DEUX FORMATAGES DU §8.6, mesurés séparément — l'horodatage est rendu AU FUSEAU DE L'ESPACE (§8.6 bis, INC-216, décision 996).
 if printf '%s' "$corps" | grep -qE '\b125000\.00\b'; then
 	ok "card.amount rend 125000.00 : ni séparateur de milliers, ni symbole (§8.6)"
 else
 	fail "le formatage du montant a changé sans révision du §8.6"
 fi
 
-horodatage=$(psql_db -c "select app.mail_template_substituer('{{card.next_action_at}}',
-	jsonb_build_object('card.next_action_at',
-		to_char(next_action_at at time zone 'UTC', 'DD/MM/YYYY HH24:MI')))
-	from public.card_placements where card_id = '$AFFAIRE_COMPLETE';")
-# RETOURNÉE LE 2026-10-25 (décision 704, INC-309) : elle figeait la DATE de l'affaire seedée, « 24/08/2026 09:00 »,
-# que le seed a depuis déplacée (mesuré : 24/10/2026 09:00). Ce que le §8.6 tient est le FORMAT : JJ/MM/AAAA HH:MM, en
-# UTC. L'assertion exige ce format, et la valeur relue indépendamment en base pour la même affaire.
-attendu_horodatage=$(psql_db -c "select to_char(next_action_at at time zone 'UTC', 'DD/MM/YYYY HH24:MI')
-	from public.card_placements where card_id = '$AFFAIRE_COMPLETE';")
+# RÉVISÉ LE 2026-11-25 (INC-216, décision 996, décision 51). Ce contrôle simulait le rendu par sa PROPRE mise en forme en UTC — il ne
+# voyait donc jamais le vrai rendu, et il ne pouvait pas rougir quand le produit a gagné un fuseau. Il lit désormais la sortie RÉELLE de
+# `rendre_modele_email` pour l'affaire seedée, et la compare à l'instant de la colonne relu au fuseau de l'ESPACE de l'affaire — celui
+# de la colonne `workspaces.timezone`, lue indépendamment. Ce que le §8.6 tient est le FORMAT JJ/MM/AAAA HH:MM, et le fuseau.
+# Le modèle de l'épreuve est POSÉ puis RETIRÉ dans une transaction annulée : le seed est rendu intact. Le modèle du seed n'emploie pas
+# `{{card.next_action_at}}`, et c'est cette variable qui est éprouvée.
+horodatage=$(psql_db -c "begin;
+	insert into public.mail_templates (id, workspace_id, name, subject, body_text, created_by)
+	select '7e11a7e0-0000-4000-8000-0000000000e9', c.workspace_id, 'Épreuve INC-216 — harnais', 'x', 'ECHEANCE=<{{card.next_action_at}}>',
+	       '5eed0000-0000-4000-8000-000000000011'
+	  from public.cards c where c.id = '$AFFAIRE_COMPLETE';
+	select substring(r.body_text from 'ECHEANCE=<([^>]*)>')
+	  from public.rendre_modele_email('7e11a7e0-0000-4000-8000-0000000000e9', '$AFFAIRE_COMPLETE') r;
+	rollback;" | grep -oE '[0-9]{2}/[0-9]{2}/[0-9]{4} [0-9]{2}:[0-9]{2}' | head -1)
+attendu_horodatage=$(psql_db -c "select to_char(cp.next_action_at at time zone w.timezone, 'DD/MM/YYYY HH24:MI')
+	from public.card_placements cp join public.cards c on c.id = cp.card_id join public.workspaces w on w.id = c.workspace_id
+	where cp.card_id = '$AFFAIRE_COMPLETE';")
 if [ -n "$attendu_horodatage" ] && [ "$horodatage" = "$attendu_horodatage" ] \
 	&& printf '%s' "$horodatage" | grep -qE '^[0-9]{2}/[0-9]{2}/[0-9]{4} [0-9]{2}:[0-9]{2}$'; then
-	ok "card.next_action_at rend JJ/MM/AAAA HH:MM en UTC — limite nommée, INC-216"
+	ok "card.next_action_at rend JJ/MM/AAAA HH:MM au fuseau de l'espace — la vraie sortie du rendu (INC-216)"
 else
-	fail "le formatage de l'horodatage a changé sans révision du §8.6 : $horodatage"
+	fail "l'horodatage rendu ne suit pas le fuseau de l'espace : « $horodatage » au lieu de « $attendu_horodatage »"
 fi
 
 # UN OBJET NON LISIBLE ET UN OBJET INCONNU RENDENT LA MÊME CHOSE (§8.3). Le contrôle porte sur le

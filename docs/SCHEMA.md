@@ -3467,6 +3467,14 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
   `plateforme_creer_espace` de `0089`.
 - **Preuve** : pgTAP `0183`, rouge avant la migration ; `0084` inchangée et verte.
 
+### Migration `0204` — `INC-216` T1 : le fuseau de l'espace (`0204_fuseau_espace.sql` ; spécifiée le 2026-11-25, décisions 992 et 996)
+
+`docs/SPEC-modeles-emails.md` §8.6 bis. `workspaces.timezone text not null default 'Europe/Paris'`, contrainte `workspaces_timezone_valide` (`app.is_valid_timezone`,
+qui interroge `pg_timezone_names`). `public.workspace_set_timezone(p_workspace_id, p_timezone)` : l'administrateur de l'espace (`app.is_workspace_admin`) ou un
+superadministrateur ; `forbidden` (42501) pour tout autre appelant **et** pour un espace inexistant (le même refus), `invalid_timezone` (22023) pour un nom
+inconnu. Le déclencheur `workspaces_audit` nomme la colonne `timezone`. `public.rendre_modele_email` rend `card.next_action_at` et les champs communs
+`datetime` à ce fuseau (`app.card_common_field_texte` à quatre paramètres) ; la version à trois paramètres reste en UTC, pour l'index de recherche.
+
 ### Migration `0203` — `CRM-161` T3.d : le plafond journalier compte tous les espaces de la personne (`0203_plafond_journalier_tous_espaces.sql` ; spécifiée le 2026-11-25, avant le code)
 
 `docs/SPEC-espace-courant.md` §16.9.3 ; décision 981. *Écrite et appliquée en développement le 2026-11-25 ; Q3 tranchée par la décision 989 (le refus sans minutes, accepté).*

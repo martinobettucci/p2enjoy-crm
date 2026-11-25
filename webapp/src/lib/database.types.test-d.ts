@@ -1376,9 +1376,13 @@ type _vueDerivationColonnes = Expect<
 // `0201` de CRM-161, TRANCHE T3.c, REMPLACE `organization_list` : `p_workspace_ids` en dernier, `workspace_id` rendu,
 // `p_workspace_id` facultatif (docs/SPEC-espace-courant.md §16.8.1) ; `0202` REMPLACE `temps_valorise`, qui rend
 // `workspace_id` (§16.8.2). Les anciennes signatures sont retirées. Le compte ne change pas.
+// `0204` d'INC-216, TRANCHE T1, ajoute `workspace_set_timezone` (l'administrateur de l'espace ou un super-administrateur règle le
+// fuseau de ses e-mails, `docs/SPEC-modeles-emails.md` §8.6 bis). CE QUI ÉCHAPPE AU GÉNÉRATEUR : les refus `forbidden` (42501) et
+// `invalid_timezone` (22023). Le compte s'accroît d'une.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'workspace_set_timezone'
     | 'platform_connector_instructions'
     | 'platform_set_connector_instructions'
     | 'connector_instructions_text'

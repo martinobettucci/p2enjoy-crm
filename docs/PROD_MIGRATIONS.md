@@ -1745,7 +1745,36 @@ aucun secret.**
 
 **Ce qui devient visible** : un retrait et une largeur qui manquaient. **Retour arrière** : la webapp de la révision d'avant.
 
+### 2.83 `INC-216` T1 — le fuseau de l'espace : les horodatages d'un e-mail se rendent à l'heure de l'espace (la migration 204) (EN ATTENTE)
+
+`docs/SPEC-modeles-emails.md` §8.6 bis ; `docs/SCHEMA.md` « Migration `0204` » ; décisions 992 et 996. **Une colonne ajoutée**
+(`workspaces.timezone`, non nulle, défaut `Europe/Paris`, contrainte `workspaces_timezone_valide` sur `pg_timezone_names`), **une fonction
+de validation** (`app.is_valid_timezone`), **une fonction de réglage** (`public.workspace_set_timezone`, l'administrateur de l'espace ou un
+superadministrateur, refus en base), **deux fonctions redéfinies** (`public.rendre_modele_email`, `app.card_common_field_texte` — une version à
+quatre paramètres, celle à trois restant en UTC pour l'index de recherche), **un déclencheur recréé** (`workspaces_audit`, qui nomme aussi la
+colonne `timezone`). Aucune variable, aucun secret. **Compatible avec la webapp et le connecteur livrés** : une colonne avec défaut et une
+fonction neuve. **Après la 203** (l'ordre numérique ; les deux sont indépendantes).
+**Changement de comportement VOULU, à annoncer** : dès la 204, tout espace existant prend `Europe/Paris`, et les e-mails rendus à partir
+d'un modèle (relances, séquences, envois) écrivent leurs heures à Paris et non plus en UTC. Un e-mail déjà rendu garde son texte.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | **Lire la production avant** | session de livraison | que le fuseau existe côté base : `select count(*) from pg_timezone_names where name = 'Europe/Paris'` doit rendre `1` ; et les espaces : `select slug from public.workspaces` |
+| 2 | Appliquer la 204 | session de livraison, dans la fenêtre du lot | `runProd.sh --migrate` (§3), après la 203 |
+| 3 | Relire | session de livraison | `select slug, timezone from public.workspaces` : tous à `Europe/Paris` ; `select to_char('2026-07-15 09:00+00'::timestamptz at time zone 'Europe/Paris', 'HH24:MI')` rend `11:00` |
+| 4 | Régler un espace qui n'est pas à Paris | le responsable, s'il y en a | `workspace_set_timezone(<espace>, '<fuseau IANA>')` sous le jeton de l'administrateur de l'espace (l'écran de T2 suit) |
+
+**Retour arrière** : rejouer, dans cet ordre, les définitions de la `0167` (`create or replace function public.rendre_modele_email` et
+`app.card_common_field_texte` à trois paramètres), puis `drop function app.card_common_field_texte(text, jsonb, jsonb, text)`,
+`drop function public.workspace_set_timezone(uuid, text)`, `alter table public.workspaces drop constraint workspaces_timezone_valide`, rejouer le
+déclencheur de la `0144` (`workspaces_audit` sans `timezone`), `drop function app.is_valid_timezone(text)`, puis
+`alter table public.workspaces drop column timezone`. **Risque connu** : aucun sur les données ; un espace réglé entre-temps perd son réglage.
+
 ## 3. Migrations en attente
+
+**La 204** (`INC-216` T1, décisions 992 et 996), *en attente* : le fuseau de l'espace — les horodatages d'un e-mail se rendent à l'heure de l'espace
+(§2.83, `docs/SCHEMA.md` « Migration `0204` »). **Après la 203.** Compatible avec la webapp et l'image `mcp` livrées ; elle peut partir seule, avant l'écran de
+T2. Aucun geste préalable du responsable ; **changement de comportement voulu à annoncer** (heures à Paris dans les e-mails rendus).
 
 **La 201 et la 202** (`CRM-161` T3.c, décisions 963 et 965), *en attente* : `organization_list` lit plusieurs espaces, et
 `temps_valorise` rend l'espace de chaque ligne (§2.80, `docs/SCHEMA.md` « Migrations `0201` et `0202` »). **Après la 200**,

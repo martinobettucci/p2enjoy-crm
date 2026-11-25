@@ -1022,6 +1022,10 @@ une ligne dans `mail_outbox`. `smtp_worker` la consomme, envoie via l'identité 
 (`From` = adresse interne de l'utilisateur, `Reply-To` = adresse de la card), puis archive le
 message envoyé. Une panne SMTP ne perd donc aucun message : elle repousse la tentative.
 
+**Le fuseau des heures rendues (`INC-216`, décisions 992 et 996).** `public.rendre_modele_email` rend `card.next_action_at` et les champs communs `datetime` d'un
+modèle au fuseau de l'ESPACE de l'affaire (`workspaces.timezone`, `Europe/Paris` par défaut, réglé par `public.workspace_set_timezone`), jamais en UTC ; l'index de
+recherche des champs reste en UTC (`docs/SPEC-modeles-emails.md` §8.6 bis).
+
 ## 5. Modèle de données
 
 Le modèle complet, colonne par colonne, est décrit dans **`docs/SCHEMA.md`**. Familles :
