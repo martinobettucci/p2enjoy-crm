@@ -1806,7 +1806,7 @@ la personne, avant `prepare_email`. **Aucune famille, aucune case, aucun outil n
 table, aucune colonne, aucune variable, aucun secret ; signature et droits inchangés. **Compatible avec la webapp, le connecteur et `mail-sync` livrés** (le corps
 du résumé reste du texte brut, ses liens au jeton `{site}`). **Après la 205** (l'ordre numérique) ; elle peut partir seule. **Changement de comportement
 VOULU, à annoncer** : dès la 206, le résumé du matin cite aussi les mentions non lues du fil d'une organisation, et une personne dont c'est la seule nouveauté
-reçoit son résumé. *Écrite et prouvée en développement le 2026-11-25 (7a) : pgTAP `0191`, E2E `digest` jusqu'à la boîte de développement, seed §58.*
+reçoit son résumé. *Écrite et prouvée en développement le 2026-11-25 (7a) : pgTAP `0191`, E2E `digest` jusqu'à la boîte de développement.*
 
 | # | Geste | Qui | Comment |
 |---|---|---|---|

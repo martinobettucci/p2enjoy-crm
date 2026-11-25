@@ -3475,17 +3475,19 @@ assistant de démonstration le reçoive :
 - **rejouable** : le même fuseau réécrit ne change aucune colonne, donc le déclencheur d'audit n'écrit aucune ligne ;
 - **ordre** : la section est jouée après le §56, donc après la création de l'espace par le §54/§55.
 
-## 58. Une mention d'organisation que le digest cite — `INC-361` (`docs/SPEC-etiquettes-digest.md` §5.2 bis)
+## 58. Une mention d'organisation que le digest cite — `INC-361` : **retirée du jeu** (`docs/SPEC-etiquettes-digest.md` §5.2 bis)
 
-*Écrit le 2026-11-25, avant le code (décision 1000).* Pour que le digest du seed (§31) montre sa ligne d'organisation, **Camille
-mentionne Driss** dans le fil d'**Imprimerie Duval** — une organisation qu'aucune preuve ne fige (§50) :
-- **le commentaire** de Camille, « Voir avec Driss leur devis de brochures. », posé par le vrai geste (`organization_comments`,
-  sous le jeton de Camille) ; **la mention** de Driss par `organization_comment_mentions`, sous le même jeton — le vrai
-  déclencheur de la `0188` notifie Driss (`subject_organization_id`, non lue) ;
-- **l'ordre** : « Imprimerie Duval » naît de l'**import du carnet** (§8 tricies, `contacts-salon.csv`) ; la section est donc jouée
-  **après** lui, donc **après** le digest du seed (§31), déjà parti : *corrigé le 2026-11-25, la première version la plaçait avant le §31, sur
-  une base neuve où l'organisation n'existe pas encore*. Le digest du seed ne cite donc pas cette mention ; **le prochain digest de Driss la
-  cite** (celui de l'E2E `e2e/mail/digest.spec.ts`, ou le job du matin) ;
-- **rejouable** : le commentaire est retrouvé par son texte avant d'être posé ; rien n'est dupliqué ;
-- **ce que cela change ailleurs** : la cloche de Driss compte une notification d'organisation de plus ; le fil d'Imprimerie Duval
-  porte un commentaire.
+*Écrit le 2026-11-25 (décision 1000) ; **revu le même jour, décision 1001** : le jeu ne porte pas cette mention.* La première version
+faisait mentionner Driss par Camille dans le fil d'**Imprimerie Duval**, pour que le digest du jeu montre sa ligne d'organisation.
+La campagne de la session de livraison l'a mise en défaut : une mention doit être **non lue** pour entrer dans le digest, et elle
+ajoute donc une notification non lue à Driss — alors que plusieurs preuves comptent ses notifications (`notifications.spec.ts`,
+`preferences-notifications.spec.ts`, `mentions-composeur.spec.ts`, le manuel `05-notifications`), « 2 non lues » devenant « 3 ».
+Aucune autre personne du jeu n'y échappe : **Farida n'a aucune notification, par contrat** (`notifications-surface.spec.ts`,
+`droits-interface.spec.ts`), et les boîtes de Camille sont comptées de même ; les autres comptes du realm n'ont pas de profil dans
+l'espace. Une persona de plus ajouterait un membre à toutes les listes que le jeu fige, pour une ligne de digest.
+- **Décision** : le jeu **ne pose aucune mention d'organisation**. Aucune assertion existante n'est relâchée.
+- **La démonstration** de la ligne est reproductible sans le jeu : l'E2E `e2e/mail/digest.spec.ts` écrit, par les vrais gestes
+  de l'écran sous le jeton de Camille, un commentaire sur « Imprimerie Duval » (créée par l'import du carnet, §8 tricies) qui
+  mentionne Driss, lit le mail reçu dans la boîte de développement, puis **retire** le commentaire et la notification ; le pgTAP
+  `0191` fait de même dans une transaction annulée. Le digest du jeu (§31) reste celui des mentions d'affaire.
+- **Ce que cela change ailleurs** : rien — ni la cloche de Driss, ni le fil d'Imprimerie Duval.
