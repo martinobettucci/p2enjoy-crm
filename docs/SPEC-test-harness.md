@@ -645,9 +645,13 @@ rend toujours 5/5 depuis le shell WSL réel.
 
 ### 7.2 Parcours du harnais
 
-1. **`npm run test:sql`** est vert et son résumé unique annonce exactement **23 fichiers** et
-   **1698 assertions**. Les deux compteurs sont figés : vérifier les seules assertions ne détecte
-   pas nécessairement la disparition d'une suite entière (décision 279).
+1. **`npm run test:sql`** est vert et son résumé unique annonce exactement le nombre de **fichiers** de `supabase/tests/` et
+   la **somme des `select plan(N)`** que ces fichiers déclarent. **Les deux comptes sont DÉRIVÉS, jamais figés** (INC-125,
+   décision 995 ; ils l'ont été à 23 et 1698 par la décision 279, puis révisés plus de cent fois, à la main, jusqu'à ce que
+   personne ne les révise plus). Vérifier les seules assertions ne détecte pas nécessairement la disparition d'une suite
+   entière : un fichier sauté ou un plan non tenu fait encore différer le compte exécuté du compte déclaré. Chaque suite
+   déclare exactement un plan, sinon le harnais s'arrête. De même, les scénarios que `e2e:api`, `e2e:ui` et `e2e:mail` doivent
+   rendre sont ceux que `playwright test --list` énumère (section 2 bis du harnais).
 2. **`npm run e2e:api`** est vert, et couvre les six scénarios du §4.3.
 3. **`npm run e2e:ui`** reste vert : le renommage du projet et la variable `E2E_PROJETS` n'ont rien
    cassé. Une écriture suivie d'une relecture API attend d'abord le signal de réussite que voit

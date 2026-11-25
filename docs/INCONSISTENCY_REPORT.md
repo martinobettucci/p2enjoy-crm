@@ -1884,6 +1884,14 @@ passage. Les remettre à jour sans traiter la cause — la révision qui n'est d
 reviendrait à repousser la même dérive d'une poignée d'unités. Le porteur est `CRM-008`, l'unité du
 harnais de tests.
 
+**ARBITRÉE ET MISE EN ŒUVRE le 2026-11-25 (décision 995), session `p2enjoy-crm-dd`.** Les cinq compteurs de `scripts/verify-harness.sh` ne sont plus
+des littéraux : les fichiers sont comptés sur le disque, les assertions sont la somme des `select plan(N)` que les suites déclarent
+(chaque suite en porte exactement un, sinon le harnais s'arrête), les scénarios sont ce que `playwright test --list` énumère
+(section 2 bis). La garde garde son objet — tout ce qui est déclaré s'exécute —, et ne demande plus à personne de réviser un
+nombre. **Mesuré** : sur disque 177 fichiers et 5732 assertions déclarées ; `npm run test:sql` rend « 177 fichiers, 5732 assertions,
+aucune anomalie » ; les anciens littéraux (123 et 4619) étaient faux de 54 fichiers et 1113 assertions. **Reste** : le rejeu complet du harnais
+sur la pile, en fenêtre de la session de livraison.
+
 ---
 
 ### INC-126 — la proposition de clé est inutilisable pour tout libellé portant « œ »
@@ -2549,6 +2557,13 @@ seules, non sur une comparaison avant/après.
 **Arbitrage demandé** : les trois compteurs figés doivent-ils être portés à 41, ou remplacés par
 une propriété qui ne dépend pas du volume du seed — la leçon que la tranche 2 a avait déjà tirée
 pour ses suites pgTAP ?
+
+**ARBITRÉE ET MISE EN ŒUVRE le 2026-11-25 (décision 995), session `p2enjoy-crm-dd` — la propriété, non le volume.** Les trois assertions de la section 6 de
+`scripts/verify-colonnes-protegees.sh` comparent désormais à l'instantané `CARDS_A_L_OUVERTURE`, relevé avant que le harnais ne
+touche quoi que ce soit (mécanisme d'INC-155 et de la décision 497) : plus aucun littéral, donc plus de dérive. **Preuve** : la
+section 6 rejouée sur un seed simulé à 46 cards — l'ancienne rend 3 ECHEC, la nouvelle 3 OK — et elle ROUGIT encore quand une
+card apparaît (47 contre 46). **Reste** : le rejeu complet du harnais sur la pile (il reconstruit la base), en fenêtre de la session de
+livraison.
 
 ### INC-139 — `verify-board.sh` complet : trois contrôles de plus rendent rouge, tous préexistants
 

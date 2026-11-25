@@ -644,7 +644,18 @@ PORT_RAPPORT=9323
 # **+1 par la tranche INC-326 de `CRM-055`, 2026-11-01** : `supabase/tests/0132_heritage_affaire_pieces.test.sql`, fichier
 # NEUF. 121 + 1 = 122, COMPTÉE.
 # **+1 par `CRM-120` T2, 2026-11-01** : `supabase/tests/0133_refus_404.test.sql`, fichier NEUF. 122 + 1 = 123, COMPTÉE.
-FICHIERS_SQL_ATTENDUS=123
+# --- RETOURNÉ LE 2026-11-25 — INC-125, INC-141, décision 995 -------------------------------------------------------------
+# Ce compteur, celui des assertions et les trois de scénarios ci-dessous étaient des LITTÉRAUX entretenus à la main : chaque
+# unité qui ajoutait une suite devait penser à les réviser, et aucune n'y pensait — la liste d'historiques qui précède en
+# compte plus de cent révisions, et le harnais a rougi de son propre succès à chacune (INC-101, puis INC-125, à nouveau).
+# Ils sont désormais DÉRIVÉS, de sources INDÉPENDANTES de l'exécution qu'ils jugent :
+#   - les fichiers : ceux de `supabase/tests/`, comptés sur le disque ;
+#   - les assertions : la somme des `select plan(N)` que ces fichiers DÉCLARENT (chacun doit en porter exactement un) ;
+#   - les scénarios : ce que `playwright test --list` ÉNUMÈRE (section 2 bis, qui n'exécute rien).
+# La garde garde son objet — « tout ce qui est déclaré s'exécute » : un fichier sauté, un plan non tenu ou un scénario
+# `test.skip` fait différer le compte exécuté du compte déclaré, et le harnais rougit. Ce qu'elle ne fait plus, c'est refuser
+# qu'une unité ajoute une suite : l'ajout se voit au diff, pas au harnais. Les historiques ci-dessous sont conservés.
+FICHIERS_SQL_ATTENDUS=$(find supabase/tests -maxdepth 1 -name '*.test.sql' | wc -l)
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -820,7 +831,12 @@ FICHIERS_SQL_ATTENDUS=123
 # **+9 par `CRM-120` T2** (`0133` : la fonction, sa forme, ses privilèges, plus aucun `errcode = 'P0002'`, 27 fois 404, 409
 # seul, deux refus réels, un message à espace) ; vingt assertions de treize suites révisées (`PGRST` et le message JSON,
 # décision 51), sans changer leur nombre. 4610 + 9 = 4619, COMPTÉE — « 123 fichiers, 4619 assertions, aucune anomalie ».
-ASSERTIONS_ATTENDUES=4619
+plans_declares=$(grep -hoiE '^[[:space:]]*select[[:space:]]+plan\([[:space:]]*[0-9]+' supabase/tests/*.test.sql | grep -oE '[0-9]+$' || true)
+if [ "$(printf '%s\n' "$plans_declares" | grep -c .)" -ne "$FICHIERS_SQL_ATTENDUS" ]; then
+	echo "ERREUR : chaque suite de supabase/tests/ doit déclarer exactement un select plan(N) : $FICHIERS_SQL_ATTENDUS fichiers, $(printf '%s\n' "$plans_declares" | grep -c .) plans." >&2
+	exit 1
+fi
+ASSERTIONS_ATTENDUES=$(printf '%s\n' "$plans_declares" | paste -sd+ | bc)
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1261,7 +1277,8 @@ ASSERTIONS_ATTENDUES=4619
 # **+2 par `CRM-074` T1, 2026-10-31** : `e2e/api/texte-pieces-jointes.spec.ts`, fichier NEUF — une pièce saine et retenue
 # passe à extraire, la clé de service la prend et rend le texte, l'administratrice le lit ; les refus de l'écriture, de la
 # prise et du résultat. 1286 + 2 = 1288, COMPTÉE.
-SCENARIOS_API=1288
+# -1 : jamais égal à un compte exécuté ; renseigné par l'énumération de la section 2 bis (INC-125).
+SCENARIOS_API=-1
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1838,7 +1855,7 @@ SCENARIOS_API=1288
 # 1030. **+7 par `CRM-074` T3, 2026-10-31** : `e2e/ui/pieces-jointes.spec.ts`, fichier NEUF — l'aperçu dans l'inbox (PDF et
 # son texte, scan, image, Office), dans le fil de l'affaire, et les quatre paliers. 1030 + 7 = 1037, COMPTÉE — « Total: 1037
 # tests in 115 files ».
-SCENARIOS_UI=1037
+SCENARIOS_UI=-1
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
@@ -1886,7 +1903,7 @@ SCENARIOS_UI=1037
 # 48, COMPTÉE — « Total: 48 tests in 14 files ».
 # **+1 par la tranche INC-326 de `CRM-055`, 2026-11-01** : `e2e/mail/ingestion.spec.ts` gagne la pièce d'un courrier classé à
 # la relève, qui porte l'affaire de son message. 48 + 1 = 49, COMPTÉE — « Total: 49 tests in 14 files ».
-SCENARIOS_MAIL=49
+SCENARIOS_MAIL=-1
 
 failures=0
 checks=0
@@ -2009,17 +2026,17 @@ echo
 echo "2 bis. Dénombrement des scénarios, sans exécuter une seule suite"
 
 for projet in api ui mail; do
-	case "$projet" in
-		api)  attendu=$SCENARIOS_API ;;
-		ui)   attendu=$SCENARIOS_UI ;;
-		mail) attendu=$SCENARIOS_MAIL ;;
-	esac
 	denombre=$(E2E_PROJETS="$projet" npx playwright test --config e2e/playwright.config.ts \
 		--project="$projet" --list 2>&1 | sed -n 's/^Total: \([0-9]*\) tests.*/\1/p' | tail -1)
-	if [ "${denombre:-vide}" = "$attendu" ]; then
-		ok "projet $projet : $denombre scénarios énumérés, conforme au compteur"
+	if [[ "${denombre:-}" =~ ^[0-9]+$ ]] && [ "$denombre" -gt 0 ]; then
+		case "$projet" in
+			api)  SCENARIOS_API=$denombre ;;
+			ui)   SCENARIOS_UI=$denombre ;;
+			mail) SCENARIOS_MAIL=$denombre ;;
+		esac
+		ok "projet $projet : $denombre scénarios énumérés — le compte que l'exécution devra rendre (aucun littéral, INC-125)"
 	else
-		fail "projet $projet : $attendu attendus, ${denombre:-aucun} énumérés"
+		fail "projet $projet : l'énumération ne rend aucun compte (« ${denombre:-aucun} ») ; l'exécution sera jugée contre -1"
 	fi
 done
 

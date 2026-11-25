@@ -240,6 +240,13 @@ update public.card_placements set next_action = 'Relancer la DSI après la démo
 trap 'restaurer; rm -f "$CORPS"' EXIT
 restaurer
 
+# RELEVÉ À L'OUVERTURE — INC-141 et INC-125 (docs/INCONSISTENCY_REPORT.md), décision du 2026-11-25. La section 6 comptait
+# « 41 » cards seedées en littéral : le seed grandit à chaque unité qui le complète, et le contrôle rougissait de son propre
+# succès (quinze, puis quarante et une, puis quarante-six). Ce que la section 6 prétend tenir n'a jamais été « le seed vaut n
+# lignes » mais « CE HARNAIS rend le seed tel qu'il l'a trouvé » : elle compare donc à l'instantané relevé ici, et ne porte plus
+# aucune valeur littérale (mécanisme de la décision 51 : retournée, non retirée).
+CARDS_A_L_OUVERTURE=$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")
+
 ADRESSE_C1=$(psql_db -c "select email_local_part from public.cards where id = '$CARD_C1';")
 [ -n "$ADRESSE_C1" ] || { echo "ERREUR : card C1 introuvable. Le seed est-il appliqué ?" >&2; exit 1; }
 
@@ -503,24 +510,21 @@ reconstruire_base_dev > "$P2ENJOY_TMP/p2enjoy-colonnes-reconstruction.log" 2>&1 
 
 titre "6. Le seed, inchangé"
 
-# QUINZE DEPUIS `CRM-077`, cinquième tranche : l'affaire `…0cf` du §10.4 bis de
-# `docs/SPEC-seed.md` porte l'énumération d'un track en corbeille. Le compte reste EXACT — une
-# tolérance « au moins quatorze » ne dirait plus rien d'une sonde oubliée.
-# COMPTEUR RÉVISÉ LE 2026-08-14, ET LE CONTRÔLE AVAIT RAISON D'ÊTRE ROUGE (INC-141). Il figeait
-# QUINZE cards seedées — la valeur de `CRM-040` —, et le seed en porte QUARANTE ET UNE depuis que
-# `CRM-046` a livré le jeu de démonstration complet, puis les unités suivantes. La révision n'avait
-# jamais été faite dans le même changement que les preuves qu'elle compte, contrairement à la règle.
-# Les trois valeurs sont MESURÉES ce jour, et elles CONCORDENT — 41 cards, 41 adresses distinctes,
-# 41 adresses bien formées : ni doublon, ni adresse réécrite par ce harnais.
-[ "$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")" = "41" ] \
-	&& ok "les quinze cards du seed sont intactes" \
+# HISTORIQUE DE CE COMPTEUR — il a été figé trois fois (« quinze » à `CRM-040` et `CRM-077`, « 41 » après `CRM-046`, puis
+# l'espace de Lumen et les rattachements multiples) et rougi trois fois du seul enrichissement du seed (INC-141, INC-125).
+# RETOURNÉ LE 2026-11-25 : les trois assertions comparent à `CARDS_A_L_OUVERTURE`, relevé avant que ce harnais ne touche quoi
+# que ce soit. Elles gardent leur objet — aucune sonde oubliée, une adresse DISTINCTE par card (l'index unique tient), et la
+# forme générée de chacune (aucune adresse réécrite par ce harnais) — sans porter de valeur littérale : elles ne peuvent plus se
+# refiger. L'assertion n'est pas retirée, elle est retournée (mécanisme de la décision 51).
+[ "$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")" = "$CARDS_A_L_OUVERTURE" ] \
+	&& ok "les $CARDS_A_L_OUVERTURE cards du seed sont intactes : ce harnais n'en a créé ni détruit aucune" \
 	|| fail "le nombre de cards seedées a changé : une sonde n'a pas été nettoyée"
-[ "$(psql_db -c "select count(distinct email_local_part) from public.cards where id::text like '5eed%';")" = "41" ] \
-	&& ok "quinze adresses DISTINCTES : l'index unique tient" \
+[ "$(psql_db -c "select count(distinct email_local_part) from public.cards where id::text like '5eed%';")" = "$CARDS_A_L_OUVERTURE" ] \
+	&& ok "$CARDS_A_L_OUVERTURE adresses DISTINCTES : l'index unique tient" \
 	|| fail "des adresses seedées se répètent"
 [ "$(psql_db -c "select count(*) from public.cards
 	                  where id::text like '5eed%'
-	                    and email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}\$';")" = "41" ] \
+	                    and email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}\$';")" = "$CARDS_A_L_OUVERTURE" ] \
 	&& ok "…et toutes ont la forme générée : aucune n'a été réécrite par ce harnais" \
 	|| fail "au moins une adresse seedée n'a pas la forme générée"
 

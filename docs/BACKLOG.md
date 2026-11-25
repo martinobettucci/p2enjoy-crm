@@ -20981,3 +20981,15 @@ génération bloque la suivante).
 **DoD** : Vitest (le contrôle de la sortie, chaque action) ; API (la route, le refus d'une action que la personne ne peut pas
 faire, par requête directe) ; E2E souris et clavier (demander, lire le plan, accepter, refuser, tout accepter, état dégradé) contre
 le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne complète revient à la session de livraison (décision 830).
+
+## Correctif arbitré le 2026-11-25 — INC-125 et INC-141 (décision 995)
+
+*Les compteurs de harnais se dérivent. Spécification : décision 995 ; `docs/SPEC-test-harness.md` §7.2. Connecteur MCP : sans objet
+(outillage de développement).*
+
+- [~] **INC-125 et INC-141 — des compteurs dérivés, plus de littéraux.** `scripts/verify-harness.sh` : fichiers comptés sur le
+      disque, assertions = somme des `plan(N)` déclarés, scénarios = `--list`. `scripts/verify-colonnes-protegees.sh` : la
+      section 6 compare à l'instantané d'ouverture. **Prouvé** : section 6 simulée (3 ECHEC avant, 3 OK après) ; `npm run test:sql`
+      « 177 fichiers, 5732 assertions » égal aux valeurs dérivées. **Reste** : le rejeu complet de `verify-harness.sh` et de
+      `verify-colonnes-protegees.sh` sur la pile (ils reconstruisent la base : fenêtre de la session de livraison).
+
