@@ -42638,3 +42638,7 @@ correctifs).
 ### `INC-139` b — `verify-board.sh` : une dégradation qui ne dégradait rien
 
 *2026-11-25, session `p2enjoy-crm-dd`.* **Le plus important de la mesure** : `grep -qF` d'un motif multiligne est un OU entre ses lignes. Le harnais pouvait donc rendre « COMPLAISANT » (ou, pire, « fait échouer » à tort) sans avoir modifié le fichier : une preuve de non-complaisance qui ne prouvait rien depuis que les motifs ont vieilli. **Décision** : le motif doit apparaître en entier, une fois ; sinon échec nommé. **Rejeté** : rejouer les dégradations sur l'arbre partagé (elles mutent `board.ts` et `Board.tsx` pendant la durée d'une suite entière : une autre session les verrait) — elles sont prouvées sur une copie du dépôt dans le répertoire de travail de la session.
+
+### `INC-139` b — clos : `verify-board.sh` rejoué en entier, 73 contrôles
+
+*2026-11-25, session `p2enjoy-crm-dd`.* Le doute était de savoir si « 6 cards au lieu de 4 » venait de la campagne (INC-246) ou du seed. **Mesuré sur une base remise à zéro** : six aussi — l'import du carnet (§58) pose deux affaires aux identifiants aléatoires dans `grands-comptes`. Donc ni un résidu, ni une dérive du seed : un compte qui ne distinguait pas les données du seed de celles que l'import ajoute. **Décision** : les comptes ne mesurent que les identifiants stables du seed ; l'import reste libre de poser ses affaires. Harnais entier rejoué sous mon propre verrou : 73 contrôles, aucune anomalie.

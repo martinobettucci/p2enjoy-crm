@@ -21127,4 +21127,4 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 *`verify-board.sh` rend six anomalies en fin de campagne : un recensement de routes qui ignore `enEspace(…)`, une dégradation qui ne dégradait rien (motif multiligne cherché par `grep -F`), une capture périmée, deux comptes à instruire sur base fraîche. Fiche INC-139 b. Connecteur MCP : sans objet.*
 
-- [~] **INC-139 b — `verify-board.sh` au contrat actuel** : recensement des routes enveloppées (mutation M5), `degradation()` qui exige son motif en entier (sept dégradations unitaires prouvées sur copie), liste des captures. **Reste** : les deux comptes (cards, étapes) et le harnais entier sur base fraîche.
+- [x] **INC-139 b — `verify-board.sh` au contrat actuel** : recensement des routes enveloppées (mutation M5), `degradation()` qui exige son motif en entier, liste des captures, comptes limités aux cards du seed ; harnais entier rejoué sur base remise à zéro : 73 contrôles, aucune anomalie.

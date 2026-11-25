@@ -465,14 +465,19 @@ else
 	fail "$sans_sortie étapes sans transition sortante au lieu de 2"
 fi
 
-actives=$(psql_db -c "select count(*) from public.card_placements where channel_id='$CHANNEL_GRANDS_COMPTES' and archived_at is null and card_id in (select id from public.cards where deleted_at is null)")
+# RÉVISÉ LE 2026-11-25 (INC-139 b) : le seed est suivi par l'IMPORT DU CARNET (docs/SPEC-seed.md §58), qui pose dans `grands-comptes` des affaires
+# aux identifiants tirés au hasard (« Plateforme de billetterie », « Infogérance applicative »). Mesuré sur une base remise à zéro : six cards actives,
+# quatre étapes. Ce que le board démontre, ce sont les cards du SEED, aux identifiants stables `5eed0000-…` : les comptes ne mesurent qu'elles, et
+# l'import n'est pas une dérive du seed. `$STABLES` ne retient que ces identifiants.
+STABLES="card_id::text like '5eed0000-%'"
+actives=$(psql_db -c "select count(*) from public.card_placements where channel_id='$CHANNEL_GRANDS_COMPTES' and $STABLES and archived_at is null and card_id in (select id from public.cards where deleted_at is null)")
 if [ "${actives:-0}" -eq 4 ]; then
-	ok "grands-comptes porte quatre cards actives"
+	ok "grands-comptes porte quatre cards actives du seed (l'import du carnet en ajoute d'autres, hors de ce compte)"
 else
-	fail "grands-comptes porte $actives cards actives au lieu de 4"
+	fail "grands-comptes porte $actives cards actives du seed au lieu de 4"
 fi
 
-rangees=$(psql_db -c "select count(*) from public.card_placements where channel_id='$CHANNEL_GRANDS_COMPTES' and (archived_at is not null or card_id in (select id from public.cards where deleted_at is not null))")
+rangees=$(psql_db -c "select count(*) from public.card_placements where channel_id='$CHANNEL_GRANDS_COMPTES' and $STABLES and (archived_at is not null or card_id in (select id from public.cards where deleted_at is not null))")
 if [ "${rangees:-0}" -eq 2 ]; then
 	ok "et deux cards rangées — archivée et corbeille — que le board doit exclure"
 else
@@ -483,11 +488,11 @@ fi
 # composition partant des étapes d'un groupement des cards (§7.3).
 occupees=$(psql_db -c "
 	select count(distinct current_step_id) from public.card_placements
-	where channel_id='$CHANNEL_GRANDS_COMPTES' and archived_at is null and card_id in (select id from public.cards where deleted_at is null)")
+	where channel_id='$CHANNEL_GRANDS_COMPTES' and $STABLES and archived_at is null and card_id in (select id from public.cards where deleted_at is null)")
 if [ "${occupees:-0}" -eq 3 ]; then
 	ok "elles n'occupent que trois étapes sur sept : quatre colonnes vides sont démontrées"
 else
-	fail "les cards occupent $occupees étapes au lieu de 3"
+	fail "les cards du seed occupent $occupees étapes au lieu de 3"
 fi
 
 # CONTRÔLE RETOURNÉ — décision 51, et le motif est écrit ici plutôt que dans un journal.
