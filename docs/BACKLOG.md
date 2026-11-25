@@ -20682,9 +20682,14 @@ livraison (décision 830).
   espace et son catalogue, portée offerte sur un espace isolé et gardant le filtre) ; Temps ▸ Saisie (grille groupée par espace,
   cellule écrite dans l'espace de sa ligne, totaux tous espaces, « Saisir pour » groupé par espace administré, recherche d'affaire
   bornée à l'espace d'un collègue) ; le choix de la personne du rapport (limite de T3.c levée). Preuves : unitaires — Pilotage 55,
-  Saisie des espaces 9, bibliothèques 51, rapport 19 ; manuel §28 et §30 construit, `verify-manual.sh` 170/170. Reste : E2E des
-  écrans, scénarios et images du manuel, `verify-mcp --rapide`, puis le compte rendu. **T3.d n'est pas complète** tant que les
-  preuves d'interface ne sont pas rejouées.
+  Saisie des espaces 9, bibliothèques 51, rapport 19, suite complète 6 450/6 450 ; manuel §28 et §30 construit, `verify-manual.sh`
+  170/170 ; E2E `pilotage-saisie-espaces` 9/9 (souris, clavier, lectrice, quatre paliers ; l'effet en base lu par la clé de
+  service), `pilotage` 16/16 (révisé : `?espaces=p2enjoy`), `saisie-temps`, `organisations-espaces` et les API `plafond-tous-espaces`,
+  `organisations-espaces`, `saisie-temps` — 56 sur 57 sur la base réensemencée, le seul échec (`saisie-temps.spec` ligne 70)
+  revenu vert deux fois seul (flaky sous charge parallèle, noté) ; scénarios du manuel 27-29, 23-33 et 30-31 verts ;
+  `verify-mcp --rapide` 130 contrôles, intégration 119/119 (après le redémarrage du service mcp, dont le socle n'était plus
+  publié depuis la recréation de la base le 2026-11-25 à 01:08 UTC, cause étrangère à T3.d). **T3.d est complète en
+  développement** ; reste à livrer (migration 203, puis webapp et manuel), avec T3.c.
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au
