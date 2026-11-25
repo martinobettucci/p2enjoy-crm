@@ -42329,3 +42329,17 @@ avancer le backlog et résoudre le journal des incohérences, livrer chaque lot 
 INC-286 lot 1, 361, 362 chez 30) ; INC-277 est un geste de la session de livraison au prochain créneau ; INC-330 attend le geste
 du responsable sur GitHub.
 
+
+### décision 993 — livrer le lot CRM-161 T3.c à la révision `e550be2d`, et recréer rest (INC-277)
+
+*2026-11-25, session 4522fa9c (p2enjoy-crm-11, session de livraison), sous l'objectif du responsable : livrer chaque lot stable
+sans demander (la production prend des instantanés automatiques ; un `pg_dump` est gardé avant).*
+**Le lot** : `CRM-161` T3.c — migrations 0201 (`organization_list` lit plusieurs espaces) et 0202 (`temps_valorise` rend
+l'espace), puis la webapp (l'onglet Organisations et Temps ▸ Rapport de tous les espaces, colonne et filtre « Espace ») et le
+manuel ; contrat §2.80 ; verrou `4bf515a3`.
+**La campagne** : complète à `5f0264e4`, base recréée (200 migrations) : types, unitaires, mail 57/57, mcp 131/131, pgTAP
+176/5715 verts ; ui 1362/1368, api 1417/1420, manuel 168/169 — INC-342 (webhooks, `inbox-lecture:109`, manuel 34) ou verts
+rejoués seuls (`aide`, `corbeille-inbox`, `formulaire:589` deux fois — intermittence de la famille d'INC-310 —,
+`connecteur-etiquettes`, `connecteur-organisations`, `demarrage`, `webhooks-remise`). **Aucun défaut du lot.** Garde du
+manuel 170 ; API manuel 9/9 ; captures 133 changées, 14 ajoutées, observées.
+**Dans la même fenêtre** : le service `rest` recréé (décision 992, INC-277).
