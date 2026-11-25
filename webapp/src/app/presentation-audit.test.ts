@@ -130,6 +130,10 @@ describe('le détail', () => {
 		)
 	})
 
+	it('INC-216 : le réglage du fuseau de l’espace se lit « fuseau horaire », jamais sous sa clé brute', () => {
+		expect(detailAudit(entree({ objet: 'workspace', action: 'updated', details: { changed: ['timezone'] } }))).toBe('Modifié\u00a0: fuseau horaire')
+	})
+
 	it('INC-323 : dit les comptes d’un import et le nombre de lignes d’un export, accordé par clé', () => {
 		expect(detailAudit(entree({ objet: 'contact', action: 'imported', details: { created: 8, skipped: 1, refused: 1, organizations_created: 4 } }))).toBe(
 			'Créées\u00a0: 8 · ignorées\u00a0: 1 · refusées\u00a0: 1 · organisations créées\u00a0: 4',

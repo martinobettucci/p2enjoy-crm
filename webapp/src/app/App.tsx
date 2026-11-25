@@ -52,6 +52,7 @@ import {
 	CHEMIN_ADMIN_PASTILLES_MAIL,
 	CHEMIN_ADMIN_EXPEDITEURS_BLOQUES,
 	CHEMIN_ADMIN_PROMPTS_CONNECTEUR,
+	CHEMIN_ADMIN_FUSEAU_ESPACE,
 	ANCIENNES_ADRESSES,
 	enEspace,
 	estPageDEspace,
@@ -109,6 +110,7 @@ import {
 	CLE_TITRE_PASTILLES_MAIL,
 	CLE_TITRE_EXPEDITEURS_BLOQUES,
 	CLE_TITRE_PROMPTS_CONNECTEUR,
+	CLE_TITRE_FUSEAU_ESPACE,
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
 	CLE_TITRE_OBJECTIFS,
@@ -190,6 +192,9 @@ const ReglagesExpediteursBloques = lazy(async () => ({
 // `CRM-149` T3 — Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7).
 const ReglagesPromptsConnecteur = lazy(async () => ({
 	default: (await import('./ReglagesPromptsConnecteur')).ReglagesPromptsConnecteur,
+}))
+const ReglagesFuseauEspace = lazy(async () => ({
+	default: (await import('./ReglagesFuseauEspace')).ReglagesFuseauEspace,
 }))
 /** La corbeille de `CRM-077`, chargée à la demande pour la même raison que les trois autres. */
 const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Corbeille }))
@@ -554,6 +559,15 @@ function RoutesPages() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_PROMPTS_CONNECTEUR}>
 							<ReglagesPromptsConnecteur />
+						</AppShell>
+					}
+				/>
+				{/* Réglages ▸ Fuseau horaire — `INC-216` T2. Déclarée APRÈS les prompts du connecteur, comme dans l'index (§5.117). */}
+				<Route
+					path={enEspace(CHEMIN_ADMIN_FUSEAU_ESPACE)}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_FUSEAU_ESPACE}>
+							<ReglagesFuseauEspace />
 						</AppShell>
 					}
 				/>

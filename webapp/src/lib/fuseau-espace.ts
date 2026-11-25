@@ -181,3 +181,25 @@ export function ecartAvecNavigateur(instant: Date, fuseau: string): number | nul
 	if (decalage === null) return null
 	return decalage - -instant.getTimezoneOffset()
 }
+
+/**
+ * L'écart en minutes écrit pour l'œil : « +1 h », « −5 h 30 », « +45 min ». Une donnée technique (docs/DESIGN_SYSTEM.md §2), jamais
+ * une phrase construite par concaténation (§10) : l'écran la glisse dans une clé de traduction. Le signe moins est le vrai, U+2212.
+ */
+export function formaterEcart(minutes: number): string {
+	const signe = minutes < 0 ? '−' : '+'
+	const absolu = Math.abs(minutes)
+	const heures = Math.floor(absolu / 60)
+	const reste = absolu % 60
+	if (heures === 0) return `${signe}${reste} min`
+	return reste === 0 ? `${signe}${heures} h` : `${signe}${heures} h ${String(reste).padStart(2, '0')}`
+}
+
+/** Le fuseau du navigateur de la personne, ou `null` si la plateforme ne le dit pas. */
+export function fuseauDuNavigateur(): string | null {
+	try {
+		return new Intl.DateTimeFormat().resolvedOptions().timeZone || null
+	} catch {
+		return null
+	}
+}

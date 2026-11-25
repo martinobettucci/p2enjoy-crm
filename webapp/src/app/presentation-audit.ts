@@ -109,6 +109,7 @@ const CLES_COLONNE: Readonly<Record<string, CleTraduction>> = {
 	help_text: 'audit.colonne.help_text',
 	archived_at: 'audit.colonne.archived_at',
 	inbound_domain: 'audit.colonne.inbound_domain',
+	timezone: 'audit.colonne.timezone',
 	settings: 'audit.colonne.settings',
 	workflow_id: 'audit.colonne.workflow_id',
 	node_id: 'audit.colonne.node_id',

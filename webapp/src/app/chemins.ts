@@ -252,6 +252,12 @@ export const CHEMIN_ADMIN_EXPEDITEURS_BLOQUES = '/reglages/expediteurs-bloques' 
  */
 export const CHEMIN_ADMIN_PROMPTS_CONNECTEUR = '/reglages/prompts-connecteur' as const
 
+/**
+ * Fuseau horaire de l'espace — `INC-216` T2, docs/SPEC-modeles-emails.md §8.6 ter ; docs/DESIGN_SYSTEM.md §5.117. Après les prompts du connecteur :
+ * un réglage de plus de l'espace, lisible par tout membre.
+ */
+export const CHEMIN_ADMIN_FUSEAU_ESPACE = '/reglages/fuseau-horaire' as const
+
 /** État de la messagerie — `CRM-059`. */
 export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const
 

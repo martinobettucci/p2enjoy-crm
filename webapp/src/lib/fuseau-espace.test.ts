@@ -10,6 +10,8 @@ import {
 	decalageDuFuseau,
 	ecartAvecNavigateur,
 	FUSEAU_PAR_DEFAUT,
+	formaterEcart,
+	fuseauDuNavigateur,
 	fuseauxDuNavigateur,
 	grouperFuseaux,
 	heureDansFuseau,
@@ -203,5 +205,24 @@ describe('ecartAvecNavigateur', () => {
 
 	it('ne rend rien pour un nom illisible', () => {
 		expect(ecartAvecNavigateur(ete, 'Mars/Phobos')).toBeNull()
+	})
+})
+
+describe('formaterEcart — la donnée technique de l’écart', () => {
+	it('écrit le signe, les heures et les minutes, avec le vrai signe moins', () => {
+		expect(formaterEcart(60)).toBe('+1 h')
+		expect(formaterEcart(-300)).toBe('−5 h')
+		expect(formaterEcart(330)).toBe('+5 h 30')
+		expect(formaterEcart(-570)).toBe('−9 h 30')
+		expect(formaterEcart(45)).toBe('+45 min')
+		expect(formaterEcart(0)).toBe('+0 min')
+	})
+})
+
+describe('fuseauDuNavigateur', () => {
+	it('rend un nom de fuseau, que la plateforme sait lire', () => {
+		const nom = fuseauDuNavigateur()
+		expect(nom).not.toBeNull()
+		expect(heureDansFuseau(new Date(), nom as string)).toMatch(/^\d\d:\d\d$/)
 	})
 })

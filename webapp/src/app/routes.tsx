@@ -86,6 +86,7 @@ import {
 	CHEMIN_ADMIN_CATEGORIES_ORGANISATIONS,
 	CHEMIN_ADMIN_WEBHOOKS,
 	CHEMIN_ADMIN_PROMPTS_CONNECTEUR,
+	CHEMIN_ADMIN_FUSEAU_ESPACE,
 } from './chemins'
 
 export {
@@ -129,6 +130,7 @@ export {
 	CHEMIN_ADMIN_CATEGORIES_ORGANISATIONS,
 	CHEMIN_ADMIN_WEBHOOKS,
 	CHEMIN_ADMIN_PROMPTS_CONNECTEUR,
+	CHEMIN_ADMIN_FUSEAU_ESPACE,
 }
 
 /**
@@ -244,6 +246,7 @@ export const CLE_TITRE_PASTILLES_MAIL: CleTraduction = 'admin.mailLabels.title'
 export const CLE_TITRE_EXPEDITEURS_BLOQUES: CleTraduction = 'admin.blockedSenders.title'
 /** `CRM-149` T3 — Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7). */
 export const CLE_TITRE_PROMPTS_CONNECTEUR: CleTraduction = 'admin.mcpPrompts.title'
+export const CLE_TITRE_FUSEAU_ESPACE: CleTraduction = 'admin.timezone.title'
 
 /**
  * Titre de la corbeille — `CRM-077`, même patron que les trois autres (docs/SPEC-corbeille.md §4.1).
@@ -600,6 +603,18 @@ export function IndexReglages() {
 					>
 						<span className="font-medium">{t('admin.settings.index.mcpPrompts')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.mcpPrompts.body')}</span>
+					</Link>
+				</li>
+				{/* Le fuseau horaire vient APRÈS les prompts du connecteur — `INC-216` T2, docs/DESIGN_SYSTEM.md §5.117 : un réglage de plus de
+				    l'espace. Un lien pour tout membre : l'écran se lit, et sa commande suit la capacité d'administrer (§5.59). */}
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_FUSEAU_ESPACE}
+						data-testid="entree-fuseau-espace"
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.timezone')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.timezone.body')}</span>
 					</Link>
 				</li>
 				{/* Le catalogue vient APRÈS les workflows — `CRM-030`,
