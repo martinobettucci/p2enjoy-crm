@@ -1130,3 +1130,157 @@ n'appartient pas à `CRM-163`, qui le dit au responsable.
   après 160 s, comme pour une passe interrompue — mesuré en développement ;
 - `scripts/verify-functions.sh` compte 24 tests unitaires du service principal, et les journaux du runtime restent sans
   avertissement avec la voie séparée.
+
+## 17. `CRM-166` — l'assistant de l'inbox : un plan d'actions que l'on accepte ou refuse (écrit le 2026-11-25, avant son code)
+
+*Décisions 994 et 996.* L'écran et l'application des actions : `docs/SPEC-mail-subsystem.md` §36 ; la bulle : `docs/DESIGN_SYSTEM.md`
+§5.116. Ce chapitre dit ce que la fonction `ia` lit, envoie au modèle, accepte en retour et rend à l'écran. **Connecteur MCP : non**
+(décision 994 : un assistant branché par le connecteur a déjà les outils de la messagerie et juge lui-même) ; question 2 : sans objet.
+
+### 17.1 Le principe
+
+L'assistant de l'inbox **ne fait rien**. Il lit les fils que la personne a sélectionnés et une demande écrite, et rend un **plan** — par
+fil, des actions proposées, chacune avec son motif — que l'écran fait accepter ou refuser. Le §2 vaut sans changement : l'IA suggère,
+la base décide. Chaque action acceptée passe par le geste de la page, sous le jeton de la personne (`docs/SPEC-mail-subsystem.md`
+§36.3) ; **la fonction `ia` n'écrit rien dans la messagerie**.
+
+### 17.2 L'unité est le fil, et la demande se fait par lots
+
+- Une ligne de la liste de l'inbox est un **fil** (`docs/SPEC-mail-subsystem.md` §32.2) ; la sélection de `CRM-156` désigne des fils, et le
+  plan porte sur des fils. **Au plus 50 fils** par demande (décision 994) : au-delà, l'écran ne part pas et dit le nombre.
+- La fonction ne reçoit que **5 fils à la fois** (`LOT_FILS`) : l'écran enchaîne les lots dans l'ordre de la liste. **Mesuré** (§3) : le modèle
+  produit une vingtaine de jetons par seconde (668 jetons en 32,5 s) ; un lot de 5 fils rend 400 à 800 jetons, soit 20 à 40 s — sous les
+  60 s de Kong entre deux lectures et sous la borne de 150 s du worker (§11.1) ; 50 fils d'un seul tenant ne tiendraient ni l'une ni
+  l'autre, ni les 36 864 jetons de contexte avec 2 000 caractères par mail. Le plan se construit donc **au fil de l'eau**, et la personne
+  peut agir sur les premiers lots pendant que les suivants se génèrent.
+- Chaque lot est **indépendant** : un lot en échec n'invalide pas les autres, et l'écran propose de le relancer seul.
+
+### 17.3 Ce qui part au modèle (révision du §3 et du §15.1)
+
+*Le §15.1 ouvre le contenu d'un mail reçu à la seule évaluation des pastilles ; ce paragraphe l'ouvre aussi à ce plan, et à lui seul.*
+
+Pour **chaque fil du lot** : le **message reçu le plus récent** du fil (à défaut, le plus récent) — son **objet**, l'**adresse et le nom de
+l'expéditeur**, sa **date de réception** et les **2 000 premiers caractères de son texte** (`texteDuMail`, §15.1). Pour **la demande** :
+- la **demande écrite** de la personne (1 000 caractères au plus) ;
+- les **pastilles actives** de l'espace : clé courte `p1`…, nom, descriptif (§15.1) ;
+- les **affaires où l'on peut classer** : clé `a1`…, titre — les **100 affaires les plus récemment modifiées** de l'espace que la personne
+  lit, hors corbeille ;
+- les **membres à qui l'on peut transférer** : clé `u1`…, nom complet — l'espace entier hors la personne elle-même ;
+- les **durées de sommeil** : l'énumération fixe `demain`, `semaine_prochaine`, `mois_prochain`.
+
+**Jamais** : une pièce jointe ni son nom, les destinataires, un autre message du fil, un contact, une valeur de champ, un identifiant de
+la base. Les journaux portent la durée, les jetons, le nombre de fils, d'actions rendues et d'actions rejetées — **jamais** une demande, un
+objet, une adresse, un texte, un titre d'affaire ni un nom de membre (`CLAUDE.md` §20).
+
+**Le contenu est lu par la fonction, avec le jeton de la personne, jamais reçu de l'écran** : l'écran envoie des clés de fil ; la base ne
+rend que ce que la personne voit (`public.inbox_assistant_messages`, §17.6) ; un fil qu'elle ne voit pas est écarté, compté, et dit.
+
+### 17.4 La demande et la sortie structurée
+
+`POST /api/chat`, `stream` désactivé, **température 0**, sortie par schéma JSON :
+
+```
+{ "plans": [ { "fil": <f1…f5>, "actions": [ { "action": <énumération>, "cible": <clé ou "">, "motif": <texte, 200 car. au plus> } ] } ] }
+```
+
+`actions` porte **4 éléments au plus** ; un fil sans action n'y figure pas. `fil` et `cible` sont des **énumérations** des clés de la
+demande. Les actions possibles, **toutes celles de la page** (décision 994), et le geste que l'écran emploie pour chacune :
+
+| `action` | `cible` | Geste de la page (`inbox_bulk_apply`, `p_action`) | À confirmation |
+|---|---|---|---|
+| `pose_pastille` / `retire_pastille` | une pastille `pN` | `set_label` (posée / retirée) | non |
+| `classe` | une affaire `aN` | `classify` | non |
+| `declasse` | — | `unclassify` | non |
+| `sommeil` | une durée | `snooze` (la date est calculée **par l'écran**, comme le choix de la page) | non |
+| `lu` / `non_lu` | — | `mark_read` / `mark_unread` | non |
+| `supprime_ici` | — | `delete` (`also_mailbox` faux) — la corbeille, restaurable | non |
+| `supprime_partout` | — | `delete` (`also_mailbox` vrai) | **oui** |
+| `transfere` | un membre `uN` | `transfer` | non |
+| `bloque_expediteur` | — | `blocked_sender_impact` puis `block_sender` | **oui**, double |
+
+*La date d'un sommeil n'est pas demandée au modèle* : un modèle de cette taille calcule mal les dates, et le fuseau d'un espace
+(décision 992, INC-216) n'est pas le sien. Le modèle choisit une durée ; l'écran la convertit comme il le fait pour la page.
+
+### 17.5 La sortie n'est jamais crue
+
+Comme au §15.3 : la forme est vérifiée avant tout usage. **Rejetés et comptés**, jamais devinés ni rapprochés :
+- un JSON hors schéma, ou illisible : échec `reponse_invalide` (le lot est en échec) ;
+- un **fil** qui n'est pas du lot, une **action** hors énumération, une **cible** inconnue ou **incompatible** avec l'action (une pastille pour
+  `classe`, une cible pour `lu`…) ;
+- une action en **doublon** (elle tombe), ou **contradictoire** avec une action déjà gardée du même fil : `pose_pastille` et `retire_pastille`
+  de la même pastille, `lu` et `non_lu`, deux `classe` ou `classe` et `declasse`, `supprime_ici` et `supprime_partout` — **la première est
+  gardée**, la suivante rejetée ;
+- toute action **après une suppression** : une suppression ferme le fil du plan ;
+- les motifs sont **rognés** à 200 caractères et rendus en **texte**, jamais en balisage.
+
+Les actions gardées sont **ordonnées par la fonction** : pastilles, `lu`/`non_lu`, `sommeil`, `transfere`, puis celles qui **sortent le fil de
+son dossier** — `classe`, `declasse` —, `bloque_expediteur`, et enfin la suppression. Un geste qui déplace le fil ne précède jamais un geste
+qui le vise dans son dossier d'origine. Les clés sont traduites en identifiants et en libellés **par la fonction** ; la base **restreint
+encore** à l'application (§36.3) : deux contrôles, comme aux §2 et §15.3.
+
+**Ce que la route rend**, par fil du lot : sa clé, son **objet** et l'**adresse de l'expéditeur** (de quoi afficher la ligne et bloquer),
+et la liste des actions `{action, cible: {id, libelle} | null, motif, confirmation}` ; puis `rejetees` et `ecartes` (fils non vus).
+
+### 17.6 La route, la voie et la concurrence
+
+- **`POST /ia/inbox/plan`**, corps `{workspace_id, demande, fils: [{thread_key}]}` (5 au plus). Elle authentifie la personne par son jeton ;
+  `401` sans jeton, `400` demande vide, trop longue ou plus de 5 fils, `403` si l'espace n'est pas le sien. Réponse **`202`, flux NDJSON** comme le
+  §11.1 : `{"attente": true}` toutes les 15 s, puis `{"issue": "plan", …}` ou `{"issue": "echec", "echec": code}`.
+- **Deux fonctions de lecture, sous la RLS** (une migration, dont le numéro est pris après synchronisation ; `docs/SCHEMA.md`) — elles passent par `app.inbox_scope_messages` (§32.2), la
+  portée des actions groupées : **`public.inbox_assistant_threads(p_scope jsonb)`** rend les clés des fils d'une portée, **51 au plus** — l'écran
+  s'en sert pour « tout sélectionner » sous un filtre et refuse si la 51ᵉ existe ; **`public.inbox_assistant_messages(p_workspace_id uuid,
+  p_thread_keys text[])`** rend, par fil, le message reçu le plus récent (objet, expéditeur, date, `body_text`, `body_html`), **50 fils au plus**.
+- **Sa propre voie.** `CRM-163` a mesuré (§16.1) que le runtime ne sert qu'un worker à la fois **par répertoire**, et constaté (§16.5) que deux
+  générations de l'assistant se bloquent. Une génération de 40 s sur `ia` ferait échouer l'assistant de conception et `GET /ia/etat` pendant
+  tout ce temps : la route a donc **son répertoire, `supabase/functions/_ia-inbox/`**, servi par `main` pour `ia/inbox/…` avec l'environnement
+  et la borne de `ia`, comme `_ia-pastilles` (§16.2). **Ni l'assistant de conception ni la passe des pastilles ne sont gênés.**
+- **Deux plans à la fois** — deux personnes dans deux inbox — se bloquent encore **entre eux**, sur la même voie : le second appel attend
+  10 s puis rend `502`. **L'écran le sait** : un `502`, `503` ou `504` rendu **avant la première ligne du flux** est un « assistant occupé »,
+  relancé **6 fois au plus, de 5 s en 5 s**, avec la mention à l'écran ; au-delà, le lot est en échec et se relance à la main. Relever le
+  `--request-wait-timeout` du runtime supprimerait l'attente, mais c'est un réglage global de toutes les fonctions : **hors de cette unité**,
+  nommé ici plutôt que fait.
+
+### 17.7 Les bornes
+
+| Borne | Valeur |
+|---|---|
+| Fils par demande | 50 (`FILS_MAX`) |
+| Fils par lot | 5 (`LOT_FILS`) |
+| Demande écrite | 1 000 caractères |
+| Texte d'un mail | 2 000 caractères (§15.1) |
+| Affaires proposées | 100 |
+| Actions par fil | 4 |
+| Un lot | 90 s (`BORNE_PLAN_MS`), puis `delai_depasse` ; aucune nouvelle tentative dans la fonction |
+
+### 17.8 Le mode dégradé, et l'annulation
+
+`GET /ia/etat` (§11.3) dit si l'assistant est disponible ; la bulle le lit à son ouverture. **Sans IA** (clé absente ou refusée, serveur
+injoignable, modèle absent), elle le dit — avec les mots du §3 : « l'assistant est mal configuré », « l'assistant ne répond pas » — et **n'offre
+rien** : ni champ, ni bouton. Les échecs d'un lot sont ceux du §3 plus `reponse_invalide`. **Annuler** une demande en cours **coupe la requête du
+lot courant** (le flux se ferme, la fonction arrête sa génération) et n'envoie pas les suivants ; **les lots déjà rendus restent proposés**.
+Le plan n'est **conservé nulle part** : c'est un état d'écran, comme une sélection ; fermer la bulle ou changer de dossier l'abandonne.
+
+### 17.9 Le simulateur
+
+Quatre scénarios s'ajoutent au §11.6, atteints comme les autres par `x-ia-simulateur` et `IA_SIMULATEUR_HOST` (le développement seul) :
+- **`inbox`** — déterministe : le simulateur lit la demande et les clés de la requête, et rend **une action par verbe reconnu** dans la demande
+  (« lu », « non lu », « sommeil », « supprime ici », « supprime partout », « bloque », « transfère », « pastille <nom> », « classe dans <titre> »)
+  pour **chaque fil du lot**, plus **deux entrées que la fonction doit rejeter** : un fil `f99` et, sur le premier fil, une cible `p99` ;
+- **`inbox_lent`** — la réponse de `inbox`, après 4 s : la progression, l'annulation et l'assistant de conception qui répond pendant ce temps ;
+- **`inbox_invalide`** — un JSON hors schéma ; **`panne`** (§15.5) — `500`.
+
+### 17.10 Preuves
+
+- **Unitaires de la fonction** : la demande construite (troncature, texte tiré du HTML, aucune pièce jointe, aucun destinataire, les listes bornées),
+  le contrôle de la sortie (chaque rejet du §17.5, l'ordre, les contradictions, la suppression qui ferme le fil), la borne de 90 s par borne injectée,
+  le journal **sans contenu**, l'en-tête du simulateur ignoré sans `IA_SIMULATEUR_HOST`, le `403` d'un espace étranger sans aucun appel au modèle.
+- **API, par requête directe** (`e2e/api/ia-inbox.spec.ts`) : le plan rendu sur des fils du seed contre le simulateur ; un fil qu'une autre
+  personne seule voit est **écarté** ; la lectrice d'un autre espace est refusée ; sans jeton, `401` ; les deux fonctions de lecture sous la RLS
+  (pgTAP) ; **la concurrence** — `GET /functions/v1/ia/etat` rend `200` en moins de 5 s pendant un plan `inbox_lent`
+  (**rouge avant** la voie : `502` à 10 s ; verte après).
+- **E2E d'interface** : `docs/SPEC-mail-subsystem.md` §36.8.
+
+### 17.11 Ce que cette unité ne fait pas
+
+Aucune pièce jointe envoyée ; aucune réponse rédigée ni aucun envoi ; aucune affaire ni aucun contact créés ; aucune écriture de la fonction
+dans la messagerie ; aucune conservation du plan, ni historique de demandes ; aucun fil d'un autre espace ; aucun outil du connecteur MCP.

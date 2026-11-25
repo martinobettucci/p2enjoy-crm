@@ -42441,3 +42441,23 @@ superadministrateur, refusée en base, journalisée ; (4) deux tranches — la b
 system. Connecteur MCP : question 1 = non, question 2 = sans objet (décision 992). **Le code suit** ; le test qui fige l'UTC
 (`0054_rendu_modeles_emails.test.sql`, `CRM-063 §8.6`) est révisé avec lui, non retiré (décision 51).
 
+### décision 996 — `CRM-166` : la spécification de l'assistant de l'inbox, et les choix qu'elle fait
+
+*2026-11-25, session d5b44a2d (p2enjoy-crm-30), sous la décision 994 du responsable. Spécification : `docs/SPEC-ia.md` §17,
+`docs/SPEC-mail-subsystem.md` §36, `docs/DESIGN_SYSTEM.md` §5.116.* Ce que la décision 994 laissait ouvert, et ce que la mesure et le
+code existants ont imposé :
+- **L'unité du plan est le fil**, comme celle de la liste et des actions groupées (`CRM-156`) ; le modèle reçoit le message reçu le plus récent
+  de chaque fil. Écarté : le message — la liste n'en montre pas, et `inbox_bulk_apply` agit sur des fils.
+- **Des lots de 5 fils**, enchaînés par l'écran. Mesuré (`docs/SPEC-ia.md` §3) : ~20 jetons par seconde ; 50 fils d'un tenant ne tiennent ni
+  les 60 s de Kong, ni la borne de 150 s du worker, ni les 36 864 jetons de contexte. Écarté : une seule génération ; une file en base avec une
+  passe `pg_cron` (une minute de latence, et une table pour un état d'écran).
+- **Une voie à part, `_ia-inbox`** (le patron de `CRM-163`, `docs/SPEC-ia.md` §16.2), pour que le plan ne bloque ni l'assistant de conception ni
+  la passe des pastilles. Deux plans simultanés se bloquent entre eux (§16.5) : l'écran relance un « occupé » 6 fois de 5 s. Écarté, nommé : relever
+  `--request-wait-timeout` du runtime, un réglage global.
+- **Le plan n'est conservé nulle part** : un état d'écran. Aucune table pour lui ; une migration de deux fonctions de lecture seulement.
+- **L'ordre des actions est fixé par la fonction** : ce qui sort le fil de son dossier passe en dernier ; **la date d'un sommeil est calculée par
+  l'écran**, le modèle ne choisit qu'une durée.
+- **« Tout accepter » n'applique que les actions sans confirmation** : les gestes irréversibles de la décision 994 gardent leur confirmation, une
+  par action ; le message de confirmation dit combien restent à valider.
+- **Connecteur MCP** : question 1 non, question 2 sans objet (décision 994).
+**Conséquence** : tranches `T1` (la fonction, la voie, les deux lectures, le simulateur), `T2` (l'écran), `T3` (le manuel, les captures, le contrat).

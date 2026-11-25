@@ -20975,10 +20975,15 @@ refuse mail par mail. »
   s'annule.
 **Connecteur MCP** (décision 994) — question 1 : **non** (un assistant connecté par le MCP a déjà les outils de la messagerie et
 juge lui-même) ; question 2 : sans objet.
-**Spécification** : à écrire avant le code — `docs/SPEC-ia.md` (la route, la demande, la sortie contrôlée, les bornes, le
-simulateur), `docs/SPEC-mail-subsystem.md` (la bulle dans l'inbox, l'application des actions), `docs/DESIGN_SYSTEM.md` (la bulle,
-le plan, l'acceptation), le manuel (inbox), le contrat ; l'impact sur la fonction `ia` d'une demande longue (CRM-163 : une
-génération bloque la suivante).
+**Spécifiée le 2026-11-25** (décision 996) : `docs/SPEC-ia.md` §17 (le fil comme unité, les lots de 5, ce qui part au modèle, la sortie contrôlée,
+la voie `_ia-inbox` — CRM-163 —, le simulateur), `docs/SPEC-mail-subsystem.md` §36 (la bulle, le plan, l'application par les gestes de la page,
+« Tout accepter »), `docs/DESIGN_SYSTEM.md` §5.116. Le manuel (inbox) et le contrat suivent le code.
+**Tranches** :
+- [ ] **T1 — la fonction** : `POST /ia/inbox/plan`, la voie `_ia-inbox` et son routage dans `main`, les deux fonctions de lecture (une migration,
+  `database.types.ts` régénéré), le simulateur (`inbox`, `inbox_lent`, `inbox_invalide`) ; unitaires, pgTAP, API (dont la concurrence, rouge avant la voie) ;
+- [ ] **T2 — l'écran** : la lib du plan, la bulle et son panneau dans `RouteInbox`, l'acceptation par les gestes de la page, « Tout accepter » ;
+  Vitest, E2E souris et clavier contre le simulateur, captures observées ; **le responsable confirme la lecture ciblée du design system avant le code** ;
+- [ ] **T3 — le manuel, le contrat, le seed** : le chapitre de l'inbox, `docs/PROD_MIGRATIONS.md`, le changelog ; l'unité passe `[P]`.
 **DoD** : Vitest (le contrôle de la sortie, chaque action) ; API (la route, le refus d'une action que la personne ne peut pas
 faire, par requête directe) ; E2E souris et clavier (demander, lire le plan, accepter, refuser, tout accepter, état dégradé) contre
 le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne complète revient à la session de livraison (décision 830).

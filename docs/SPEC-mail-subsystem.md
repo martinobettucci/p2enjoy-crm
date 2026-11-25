@@ -5704,3 +5704,82 @@ mail entrant (`CRM-162`, session f9, les reprendra) ; le connecteur, qui n'appel
 - **Unitaires** : `lib/inbox.test.ts`, `lib/actions-groupees.test.ts`, `lib/outbox`, `lib/mail-etat`, `lib/mails-prepares` :
   l'espace est passé à chaque lecture ; les écrans montés hors coquille (`RouteInbox`, `EtatMessagerie`) reçoivent l'espace
   par `FournisseurEspace`.
+
+## 36. L'assistant de l'inbox : la bulle, le plan, l'acceptation — `CRM-166`
+
+*Écrit le 2026-11-25, avant le code (décisions 994 et 996). Ce que la fonction lit, envoie et accepte : `docs/SPEC-ia.md` §17. La forme :
+`docs/DESIGN_SYSTEM.md` §5.116. **Connecteur MCP : non** (décision 994).*
+
+### 36.1 La bulle, et d'où vient la sélection
+
+- **Une bulle en bas à droite de l'inbox, et de l'inbox seulement** : ni les autres pages, ni la fiche d'une affaire. Elle s'ouvre en un panneau
+  qui **ne bloque pas la page** (aucune modale, `docs/DESIGN_SYSTEM.md` §5.116).
+- **Sa source est la sélection de `CRM-156`** : les fils cochés, ou « tout le filtre » quand l'écran connaît les fils de ce filtre
+  (`public.inbox_assistant_threads`, `docs/SPEC-ia.md` §17.6). **Au plus 50 fils** ; au-delà, la bulle dit le nombre et n'offre pas de partir.
+  Sans fil sélectionné, elle le dit (« Cochez des mails dans la liste ») et n'offre pas de demande.
+- **La demande est un texte libre**, 1 000 caractères au plus, avec le compte des fils choisis ; la bulle rappelle ce qui part au modèle
+  (l'objet, l'expéditeur, la date et le début du texte — jamais les pièces jointes) avant le premier envoi de la session de la page.
+
+### 36.2 Le plan à l'écran
+
+- **Une ligne par fil**, dans l'ordre de la liste : l'objet, l'expéditeur, puis ses actions proposées — chacune avec son libellé (« Poser la pastille
+  Facture », « Classer dans Refonte intranet »), son **motif** et, pour une **action à confirmation**, la mention qui le dit.
+- **Le plan s'accepte et se refuse mail par mail** : « Accepter » applique **toutes les actions du fil**, dans l'ordre du plan ; « Refuser » le
+  rend sans suite. Aucune action n'est modifiable ni ajoutable à l'écran : le plan se refuse ou se refait avec une autre demande.
+- **Les états d'un fil** : *proposé* — *appliqué* (le nombre d'actions faites) — *refusé par la personne* — *en échec* (le refus de la base, dit en
+  clair sur la ligne, avec les messages des actions groupées) — *partiel* (certaines actions faites, une autre refusée ou déclinée).
+  Un fil appliqué ou refusé ne se rejoue pas ; un fil en échec se **réessaie**.
+- **Le plan arrive lot après lot** (`docs/SPEC-ia.md` §17.2) : la progression est dite (« lot 2 sur 10 »), les lignes apparaissent à mesure, et un
+  bouton **Annuler** coupe la demande. Un lot en échec porte sa ligne d'erreur et son « Réessayer ce lot ».
+- **Ce que le plan écarte est dit** : « 2 actions ignorées : l'assistant a proposé une pastille ou une affaire qui n'existe pas » ; « 1 mail n'est
+  plus visible ».
+
+### 36.3 L'application : le même chemin que le geste de la page
+
+**Chaque action acceptée passe par la fonction de base que la page appelle pour ce geste, sous le jeton de la personne** — la base garde le
+dernier mot (RLS, rôles, règles de la page) ; l'écran ne calcule aucun droit (`CLAUDE.md` §10) :
+- les actions de la table du `docs/SPEC-ia.md` §17.4 passent par **`inbox_bulk_apply`**, avec une portée de **ce seul fil** (`threads`), le dossier
+  courant, l'espace courant, `snoozed: 'shown'` — l'action est **celle des actions groupées** (§32.5), refus compris ;
+- `sommeil` reçoit l'ISO de la durée **calculée par l'écran** avec le helper du choix de la page ;
+- `bloque_expediteur` passe par **`blocked_sender_impact`** puis **`block_sender`**, comme l'écran de la page (§32.8), avec **sa double confirmation**
+  et l'adresse que le plan rend ;
+- **l'ordre est celui du plan** (`docs/SPEC-ia.md` §17.5), qui place en dernier ce qui sort le fil de son dossier.
+
+**Les actions à confirmation gardent leurs confirmations**, une par action, comme sur la page : `supprime_partout` — la confirmation courte de
+`CRM-151` —, `bloque_expediteur` — le nombre de messages touchés, puis la seconde confirmation. **Décliner** une confirmation n'annule pas le
+fil : l'action est *déclinée*, les autres restent faites, le fil est *partiel*.
+
+### 36.4 « Tout accepter »
+
+Un bouton **« Tout accepter »** applique **ce qui reste proposé**, après une **confirmation qui dit le nombre d'actions et de mails**. Pour
+respecter les confirmations des gestes irréversibles (décision 994), il n'applique **que les actions sans confirmation** : une action à
+confirmation reste **proposée** — le message de confirmation le dit : « 14 actions seront appliquées sur 9 mails ; 2 actions irréversibles restent
+à valider une à une » — et s'accepte ensuite, fil par fil, avec sa propre confirmation. Il s'applique fil après fil, la progression est dite, et un
+fil refusé par la base n'arrête pas les suivants.
+
+### 36.5 Les rafraîchissements
+
+Après une action appliquée, la liste de l'inbox, ses compteurs et la sélection sont **relus** comme après une action groupée : un fil classé,
+supprimé ou mis en sommeil quitte la liste, et la bulle le garde dans son plan, **appliqué**.
+
+### 36.6 Ce que la bulle ne fait pas
+
+Elle n'ouvre pas un mail, ne répond pas, ne rédige pas, n'envoie rien, ne conserve pas son plan, ne crée ni affaire ni contact (§17.11).
+
+### 36.7 Les droits
+
+Aucun droit nouveau : l'assistant n'ajoute **aucune permission**. Lire un fil, y poser une pastille, le classer, l'endormir, le supprimer, le
+transférer ou bloquer son expéditeur relèvent des droits que la personne a **déjà** sur la page, appliqués par la base. Une action qu'elle ne
+peut pas faire est **refusée par la base** et dite sur la ligne du mail ; la fonction `ia`, elle, **n'écrit rien** dans la messagerie.
+
+### 36.8 Les preuves
+
+- **Vitest** : la lib du plan (états, ordre, tout accepter qui laisse les actions à confirmation, déclin d'une confirmation, retry « occupé »,
+  annulation), chaque action vers son appel (`appelAction`, `block_sender`), le composant (états, clavier).
+- **API** : `docs/SPEC-ia.md` §17.10 ; **une action refusée par la base** — la lectrice qui n'a pas le droit de classer — rendue sur la ligne, par
+  requête directe avec les identifiants de la personne.
+- **E2E, souris et clavier, contre le simulateur** : ouvrir la bulle, demander, lire le plan, accepter un mail, en refuser un, tout accepter (avec
+  une action à confirmation qui reste), valider une confirmation, annuler une demande en cours, l'état dégradé sans IA, la lectrice. Captures
+  observées aux quatre paliers.
+- **Seed** : aucun mail ajouté — les fils du seed, que le simulateur plane de façon déterministe, couvrent le parcours ; la preuve ne dépend pas
+  d'un mail qu'elle n'a pas posé.

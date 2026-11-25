@@ -9302,3 +9302,42 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
   de saisie, comme les onglets « À saisir »). « Saisir pour » groupe les membres par espace administré (`optgroup` au nom
   de l'espace), « Moi-même » en tête. *Spécifié le 2026-11-25, avant le code.*
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
+### 5.116 La bulle de l'assistant de l'inbox : le plan que l'on accepte ou refuse — `CRM-166`
+
+*Écrit le 2026-11-25, avant le code (décisions 994 et 996), après lecture des sections ciblées — §1 à §3, §5.8, §5.42, §5.43, §5.109 et la tête du §5.110 —, non intégrale : à confirmer par le responsable avant le code de l'écran. Le comportement : `docs/SPEC-mail-subsystem.md` §36 ; ce que la fonction lit et rend :
+`docs/SPEC-ia.md` §17. Le patron est celui du panneau de notifications (§5.43), du panneau dans le flux (§5.80) et des actions groupées (§5.109).*
+
+- **La bulle est un bouton, en bas à droite de l'inbox seulement.** Icône Lucide `Sparkles` sur un disque `--color-brand`, `--color-white` sur
+  l'aplat (l'emploi que le §1 réserve au blanc sur la marque, comme la pastille de la cloche, §5.43), **48 px** (`size-12`), `--shadow-card-hover`,
+  à 16 px du bord (`bottom-4 right-4`). Elle porte `aria-expanded`, `aria-controls` vers le panneau, et un nom accessible **« Assistant IA »** ;
+  quand une demande est en cours, il devient « Assistant IA, demande en cours ». **Aucun compteur** sur la bulle, aucune animation en boucle.
+  Elle n'est rendue sur **aucune autre page** (§5.12 : la coquille n'en porte pas) et ne couvre ni la barre des actions groupées (§5.109) ni les
+  lignes de la liste : le bas de la liste réserve la hauteur de la bulle.
+- **Le panneau n'est pas une modale, et ne bloque rien** (§5.43, décisions de `CRM-043` et `CRM-075`) : ni voile, ni piège à focus, ni
+  défilement figé — la liste reste utilisable derrière, la sélection aussi. Surface `--color-surface`, `--radius-lg`, bordure `--color-border`,
+  `--shadow-card-hover`, **largeur `--size-assistant` (440 px)**, bornée à la fenêtre moins 32 px ; sous `md`, il prend cette largeur et
+  **au plus 80 % de la hauteur**, défilant à l'intérieur. Il s'ancre au-dessus de la bulle et **la bulle ne bouge pas** à son ouverture.
+  `role="region"` et un nom, `Échap` le ferme et **rend le focus à la bulle** ; un clic hors du panneau ne le ferme pas (on y revient en
+  cochant des mails).
+- **Quatre états, tous dits** (§5.8) : **sans IA** — la raison, avec les mots du §3 de `docs/SPEC-ia.md`, rien d'autre, ni champ ni bouton ;
+  **sans sélection** — « Cochez des mails dans la liste », le champ éteint **avec son motif**, jamais masqué ; **prêt** — le compte des fils, la
+  demande, « Proposer un plan » ; **en cours** — « lot 2 sur 10 », des lignes-squelettes (`SkeletonListe`) pour ce qui n'est pas arrivé, **Annuler**.
+  Le plan vide se dit : « L'assistant ne propose rien pour ces mails. »
+- **Le champ de demande** : `<textarea>` étiqueté, compteur `n / 1000` en `--text-xs` `--color-text-2` (rouge `--color-danger` au-delà), la règle
+  des champs du §5.7 ; **Entrée** y va à la ligne, **Ctrl/⌘+Entrée** envoie. Un rappel `--color-text-2` dit ce qui part au modèle.
+- **Une ligne de plan par fil**, dans une liste (`ul`) : l'objet (une ligne, `truncate`, la valeur entière en `title`), l'expéditeur en
+  `--color-text-2`, puis ses **actions** — une pilule par action, au patron des pastilles de mail (§5.103), icône Lucide de son geste + libellé —, et sous chacune son **motif** en
+  `--text-sm` `--color-text-2`. Une action **à confirmation** (supprimer partout, bloquer) porte `TriangleAlert` et le mot « irréversible » : la
+  teinte `warning-soft` de l'avertissement du §5.110, **pas** le danger, réservé à ce qui échoue.
+- **Les deux gestes d'un fil** : « Accepter » (bouton primaire §5.5, **cible 40 px**) et « Refuser » (secondaire), l'un et l'autre **annonçant leur
+  fil** par leur nom accessible (« Accepter le plan pour Facture mars »). **« Tout accepter »** est un bouton secondaire, en pied, avec la confirmation
+  qui dit le nombre d'actions et de mails (§36.4) — la confirmation est **dans le panneau**, non une fenêtre.
+- **Les états d'un fil se lisent par l'icône ET le texte** (§8, jamais la couleur seule) : *proposé* — rien ; *appliqué* — `Check`,
+  `--color-success`, « Appliqué (3 actions) » ; *refusé* — `X`, `--color-text-2`, « Refusé » ; *partiel* — `TriangleAlert`, « 2 sur 3 faites » ;
+  *en échec* — `TriangleAlert`, `--color-danger`, le refus de la base **traduit** et « Réessayer ». Les lignes appliquées et refusées se
+  grisent sans disparaître, et **gardent leur place** : le plan ne se réordonne jamais sous la main.
+- **Les confirmations des gestes irréversibles** sont celles de la page (§5.109, `CRM-151`) et **s'ouvrent dans le panneau**, sous la ligne.
+- **Annonces** : un `LiveRegion` poli dit chaque lot arrivé, chaque fil appliqué ou refusé, et la fin (« Plan prêt : 14 actions sur 9 mails »).
+- **Aucune couleur, aucune icône hors Lucide, aucun emoji.** Un seul jeton nouveau : `--size-assistant` (440 px), déclaré avec les tokens de
+  dimension du §3.
