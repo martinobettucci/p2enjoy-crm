@@ -20479,7 +20479,7 @@ campagne complète revient à la session de livraison (décision 830).
 **T3.b livrée le 2026-11-24, tard** (Rentabilité, Coûts, Ma journée, le carnet, les objectifs, la cloche, la recherche ; le formulaire d'un contact borné à son espace ; décision 988, révision `ff2804ee`).
 **T3.c livrée le 2026-11-25 au soir** (les migrations 201 et 202, l'onglet Organisations et Temps ▸ Rapport de tous les espaces ; décision 993, révision `e550be2d`).
 **T3.d à T5 livrées le 2026-11-26 au matin** (la migration 203, le plafond journalier tous espaces ; le Pilotage, la saisie et le rapport de temps de tous les espaces ; le connecteur ; le manuel ; décision 1003, révision `66a7bb3a`) ; reste le constat du responsable.
-**Il ne reste que le constat du responsable en production** : T1 à T5 sont livrées et vérifiées en développement ; le geste de production de la migration `0206` et des suivantes est au contrat de déploiement (`docs/PROD_MIGRATIONS.md`, §2.81 à §2.86, historique). Prise en charge libérée à la clôture (2026-11-26).
+**Il ne reste que le constat du responsable en production** : T1 à T5 sont vérifiées en développement et livrées en production le 2026-11-26 (décision 1003, contrat §2.81 à §2.86 en historique) ; aucun geste de livraison ne reste. Prise en charge libérée à la clôture (2026-11-26).
 
 **Origine** : demande du responsable, le 2026-11-21 ; arbitrée le même jour (décision 963).
 **Demande, verbatim** : « le inbox ne semble pas être contenu au workspace. en fait tout est contenu au workspace. d'ailleurs on
