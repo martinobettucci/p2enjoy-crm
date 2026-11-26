@@ -42751,3 +42751,7 @@ session sans son accord.
 ### `INC-371` — fermeture, et ce qu'elle a révélé
 
 *2026-11-26, session `p2enjoy-crm-dd`.* **Vérifié** : `verify-workflows.sh` sous verrou `dd-371` : la section 8 rend bien 403 après la reconstruction, jeton redemandé. **Rejeu arrêté** à la section 9 pour libérer le verrou (62 min). **Découvertes** : un comptage de triggers périmé et des suites entières trop longues (INC-373) ; et une régression de ma part dans INC-372 (message d'échec contenant « docker pull », refusé par le garde d'INC-367), corrigée — **leçon** : rejouer `npm run test:unit` avant de pousser un script, même quand la preuve de l'unité est verte.
+
+### `INC-373` — troisième écart : le seed porte deux workflows globaux
+
+*2026-11-26, session `p2enjoy-crm-dd`.* Le rejeu `dd-373` : triggers nommés OK, specs de l'unité OK (API et interface) ; un comptage « un workflow global » rendu périmé par le workflow de démonstration des checklists (SPEC-seed §28.1) — corrigé en nommant les deux. `test:unit` vert à l'arbre courant (284 fichiers) alors qu'il était rouge pendant le rejeu, et `typecheck` rouge sur `database.types.test-d.ts` (types régénérés par 30, test de dérive non mis à jour) : l'arbre d'une autre session, pour la troisième fois.
