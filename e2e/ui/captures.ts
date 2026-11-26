@@ -3,6 +3,8 @@
 // @spec CRM-122 (docs/BACKLOG.md) — tranche T2 : rien n'est recopié dans `docs/captures/` sans demande explicite
 // @spec docs/DESIGN_SYSTEM.md §11 (captures dans e2e/output, observées à chaque livraison) ; docs/SPEC-captures.md §2
 // @spec docs/SPEC-webapp.md §14 (preuves) ; CLAUDE.md §16 (vérification visuelle)
+// @spec INC-237 (docs/INCONSISTENCY_REPORT.md), Tri du lot des intermittents d'interface (docs/BACKLOG.md) — la capture attend la fin des
+//       transitions de la barre latérale (docs/DESIGN_SYSTEM.md §11 ; docs/SPEC-captures.md)
 //
 // Les captures sont écrites dans `e2e/output/<unité>/`, que le dépôt ignore : c'est là qu'on les observe. Elles ne sont
 // recopiées dans `docs/captures/<unité>/`, versionné, que sur DEMANDE (docs/SPEC-captures.md §2) : `CAPTURES_UNITES`
@@ -21,8 +23,31 @@ import { destinationsCapture } from '../../scripts/captures/captures.mjs'
 const RACINE = dirname(dirname(import.meta.dirname))
 const SORTIE = join(RACINE, 'e2e', 'output')
 
+/**
+ * INC-237 : un `setViewportSize` de 1440 à 390 px laisse la barre latérale passer en tiroir PENDANT sa transition ; une capture
+ * prise à cet instant la montre par-dessus le bord gauche du contenu, un rendu que ni le débordement ni le défilement ne
+ * mesurent et que le produit ne tient jamais au repos. On attend donc que les transitions de la barre latérale soient
+ * TERMINÉES — jamais une durée —, quel que soit leur état final : un tiroir ouvert à dessein reste ouvert.
+ */
+async function attendreBarreLateraleAuRepos(page: Page): Promise<void> {
+	await page.evaluate(
+		() =>
+			new Promise<void>((fin) => {
+				// Deux images : la transition naît au recalcul de style qui suit le redimensionnement, pas avant.
+				requestAnimationFrame(() =>
+					requestAnimationFrame(() => {
+						const barre = document.querySelector('[data-testid="barre-laterale"]')
+						const animations = barre === null ? [] : barre.getAnimations({ subtree: true })
+						void Promise.allSettled(animations.map((animation) => animation.finished)).then(() => fin())
+					}),
+				)
+			}),
+	)
+}
+
 export async function capturer(page: Page, nom: string, unite = 'CRM-007'): Promise<string> {
 	const { sortie, versionner } = destinationsCapture(unite, process.env)
+	await attendreBarreLateraleAuRepos(page)
 	const dossier = join(SORTIE, sortie)
 	mkdirSync(dossier, { recursive: true })
 	const chemin = join(dossier, `${nom}.jpg`)

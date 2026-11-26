@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+- **Tri du lot des intermittents d'interface** (INC-310 et fiches liées) : sous `lg`, la commande de recherche à icône donne le focus au champ, et `Échap` ferme la palette (INC-284) ; la grille de temps accepte une flèche frappée dès la prise de focus d'une case remplie (INC-287) ; les captures attendent la fin des transitions de la barre latérale (INC-237). Les fiches non reproduites au rejeu restent ouvertes jusqu'à la prochaine campagne complète ; les 503 de transport de `session/prolonger` sont ajoutés à INC-311.
 
 ## [Publié]
 

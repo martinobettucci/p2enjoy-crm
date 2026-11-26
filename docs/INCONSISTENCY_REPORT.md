@@ -5562,6 +5562,8 @@ aucun `retry` n'est posé — ce sont précisément les contournements que `CLAU
 
 ---
 
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — rejoué sous verrou de campagne, en série, sur la pile courante : `e2e/mail/backfill.spec.ts` 1/1 passé. **Non reproduit.** La cause décrite à la fiche tient à la charge d'une campagne complète, que ce rejeu fichier par fichier n'exerce pas ; la fiche **reste ouverte** jusqu'à ce que la prochaine campagne complète de la session de livraison la rende verte (alors close sur cette preuve), ou rouge (alors la trace est celle de la fiche mère INC-310).
+
 ### INC-209 — CLOSE le 2026-08-25 : les deux preuves sont rejouables, et c'est MESURÉ des deux côtés
 
 Sur demande explicite du responsable, les deux cas de cette entrée sont corrigés — décision 508.
@@ -5779,6 +5781,8 @@ responsable le demande.
 
 ---
 
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — rejoué sous verrou de campagne, en série, sur la pile courante : `administration-workflows.spec.ts` 71/71 passés, dont §7 bis.11. **Non reproduit.** La cause décrite à la fiche tient à la charge d'une campagne complète, que ce rejeu fichier par fichier n'exerce pas ; la fiche **reste ouverte** jusqu'à ce que la prochaine campagne complète de la session de livraison la rende verte (alors close sur cette preuve), ou rouge (alors la trace est celle de la fiche mère INC-310).
+
 ### INC-227 — `armement-sequence.spec.ts` §224 dépasse les 30 s dans la série, et passe seul en 2 s
 
 **Consignée le 2026-08-26** par la session `CRM-064` sous-tranche 3b, rencontrée en rejouant la
@@ -5816,6 +5820,8 @@ sur quatre fichiers différents. Le point commun est la SÉRIE, jamais le fichie
 n'est pas cherchée pour elle-même — parallélisme, épuisement d'une ressource de la pile, ou
 accumulation d'état entre scénarios —, chaque session continuera d'en consigner une de plus.
 
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — rejoué sous verrou de campagne, en série, sur la pile courante : `armement-sequence.spec.ts` 9/9 passés. **Non reproduit.** La cause décrite à la fiche tient à la charge d'une campagne complète, que ce rejeu fichier par fichier n'exerce pas ; la fiche **reste ouverte** jusqu'à ce que la prochaine campagne complète de la session de livraison la rende verte (alors close sur cette preuve), ou rouge (alors la trace est celle de la fiche mère INC-310).
+
 ### INC-225 — deux scénarios de `commentaires-gestes.spec.ts` échouent dans la SÉRIE et jamais isolés
 
 **Consignée le 2026-08-26** par la session `CRM-063` sous-tranche 4c. **Même famille qu'INC-219**,
@@ -5848,6 +5854,8 @@ déjà. Ce n'est pas une temporisation arbitraire (`CLAUDE.md` §18) : c'est une
 condition mesurée**, qui échoue si elle ne vient jamais.
 
 ---
+
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — rejoué sous verrou de campagne, en série, sur la pile courante : `commentaires-gestes.spec.ts` 8/8 passés. **Non reproduit.** La cause décrite à la fiche tient à la charge d'une campagne complète, que ce rejeu fichier par fichier n'exerce pas ; la fiche **reste ouverte** jusqu'à ce que la prochaine campagne complète de la session de livraison la rende verte (alors close sur cette preuve), ou rouge (alors la trace est celle de la fiche mère INC-310).
 
 ## Consignée le 2026-08-27 — la recherche de la vue liste ignore la moitié des accents
 
@@ -5943,6 +5951,8 @@ entrées, toutes de même signature — un scénario qui ne rougit **jamais** se
 qui devient l'information : le harnais d'interface porte une instabilité de série que six unités
 successives ont rencontrée sans qu'aucune n'en soit la cause. Elle mérite d'être traitée **pour
 elle-même**, par une unité qui en ait le mandat.
+
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — rejoué sous verrou de campagne, en série, sur la pile courante : `demarrage.spec.ts` 11/11 passés. **Non reproduit.** La cause décrite à la fiche tient à la charge d'une campagne complète, que ce rejeu fichier par fichier n'exerce pas ; la fiche **reste ouverte** jusqu'à ce que la prochaine campagne complète de la session de livraison la rende verte (alors close sur cette preuve), ou rouge (alors la trace est celle de la fiche mère INC-310).
 
 ### INC-231 — trois classes de deux écrans livrés ne sont PAS engendrées par le CSS produit
 
@@ -6131,6 +6141,8 @@ diagnostic. Le constat est étranger à la tranche 2 c, dont le diff ne touche n
 palette, ni aucun gestionnaire de touche : il porte sur des données de démonstration, une suite
 pgTAP, un contrat d'API et des harnais. Comportement inchangé.
 
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — rejoué sous verrou de campagne, en série, sur la pile courante : `inbox.spec.ts` 10/10 passés, puis 10/10 à nouveau. **Non reproduit.** La cause décrite à la fiche tient à la charge d'une campagne complète, que ce rejeu fichier par fichier n'exerce pas ; la fiche **reste ouverte** jusqu'à ce que la prochaine campagne complète de la session de livraison la rende verte (alors close sur cette preuve), ou rouge (alors la trace est celle de la fiche mère INC-310).
+
 ### INC-236 — `administration-workflows.spec.ts` § « les deux gestes se mènent au clavier seul » expire, en série COMME isolé
 
 **Consignée le 2026-08-28** par la session `CRM-082` (décision 542), constat **étranger à son
@@ -6193,6 +6205,8 @@ faut purger ce champ avant de réappliquer le seed.
 
 **Statut :** ouvert. Comportement inchangé, aucun test désactivé, aucune temporisation ajoutée.
 
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — rejoué sous verrou de campagne, en série, sur la pile courante : `administration-workflows.spec.ts` 71/71 passés, dont le scénario du clavier seul. **Non reproduit.** La cause décrite à la fiche tient à la charge d'une campagne complète, que ce rejeu fichier par fichier n'exerce pas ; la fiche **reste ouverte** jusqu'à ce que la prochaine campagne complète de la session de livraison la rende verte (alors close sur cette preuve), ou rouge (alors la trace est celle de la fiche mère INC-310).
+
 ### INC-237 — les captures du palier `sm-390` sont prises sur une page DÉCALÉE, et aucune assertion ne le voit
 
 **Nature :** défaut de PREUVE — non du produit —, **préexistant** à la tranche 3 de `CRM-083`,
@@ -6247,6 +6261,8 @@ au bord gauche de `main` — ; elle est **rouge sans le rechargement** (204 px d
 garde chaque capture par `attendreContenuEnPlace` ; ses captures `sm-390` et `md-900` sont renouvelées et observées.
 **Reste ouvert** pour les autres suites du dépôt, qui gardent la boucle par simple redimensionnement : la même
 correction s'y applique, unité par unité, ou dans `e2e/ui/captures.ts`.
+
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — **CORRIGÉE pour toutes les suites.** `capturer()` (`e2e/ui/captures.ts`) attend la fin des transitions de la barre latérale avant la capture, quel que soit leur état final (un tiroir ouvert à dessein reste ouvert) ; aucune durée n'est attendue. Rouge avant : `e2e/ui/captures-palier.spec.ts`, la transition allongée à trois secondes après le passage de 1440 à 390 px, la barre recouvre encore le contenu de **247,85 px** quand la capture rend la main ; vert après, 3/3 en `--repeat-each=3`. `objectifs.spec.ts` rejoué : 57 passés, un échec étranger (503 de transport, voir INC-311). Les captures `sm-390` existantes ne sont pas réécrites ici : elles se renouvellent au prochain passage de chaque unité (docs/SPEC-captures.md §2). **Statut : close.**
 
 ## Consigné le 2026-08-29 — l'ancienneté d'une ligne de coût repose sur une colonne que tout écrivain peut poser
 
@@ -7629,6 +7645,8 @@ sur le document.
 proposée** : poser le focus dans un effet après l'ouverture, comme le fait le panneau de notifications (§5.43). À
 arbitrer par le responsable.
 
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — **CORRIGÉE.** Rouge avant : `e2e/ui/fil-ariane.spec.ts`, « la recherche ouverte sous `lg` fait céder le fil, Échap le rend », sans le clic de contournement que le scénario faisait sur le champ — `toBeFocused` reçoit `inactive`. La cause est celle de la fiche, confirmée : `ouvrir()` donnait le focus dans le tour de l'ouverture. `PaletteRecherche.tsx` pose maintenant le focus dans un effet, une fois le champ affiché ; `docs/SPEC-recherche.md` §14.3 dit la ligne de la commande à icône. Vert après : `fil-ariane.spec.ts` 42/42 en `--repeat-each=3`, `recherche`, `recherche-champs-communs`, `pastilles-cachees` et `seed-champs-communs` 42/42, `inbox.spec.ts` 10/10 ; tests unitaires de la palette 6/6. **Statut : close.**
+
 ### INC-285 — `verify-armement-sequences.sh` attend encore `ON DELETE RESTRICT` sur deux clés que la migration 85 a rendues ajournables
 
 *Relevé le 2026-10-23 par la session `CRM-070`/`CRM-109`, en vérifiant que le job de purge de `CRM-109` ne partage la
@@ -7726,6 +7744,8 @@ même course. **Comportement laissé inchangé** : la correction touche le code 
 relevé. **Résolution proposée** : reproduire en unitaire la séquence focus → flèche, rétablir la sélection dans le même
 rendu que le changement de valeur (ou accepter la flèche quand le curseur est en bout de texte), et garder le scénario
 E2E comme preuve.
+
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — **CORRIGÉE.** Reproduite : `temps-fiche-affaire.spec.ts`, « au clavier seul », **1 échec sur 6** en `--repeat-each=6`. La cause est celle de l'hypothèse de la fiche, précisée : la sélection complète est posée dans un `requestAnimationFrame` après la prise de focus, et une flèche frappée avant cette image — la cadence de Playwright — trouve une case remplie sans sélection (`toutSelectionne` faux) et reste sans effet. `SaisieTemps.tsx` tient désormais un drapeau `selectionAttendue`, vrai entre la prise de focus et la pose de la sélection, tant que rien n'est saisi. Rouge avant : test unitaire de `SaisieTemps.test.tsx` (la flèche gauche frappée à la prise de focus d'une case remplie ne la quitte pas) ; vert après, 22/22 sur les deux fichiers de `SaisieTemps`. Preuve de bout en bout : `temps-fiche-affaire.spec.ts` « au clavier seul » **12/12** en `--repeat-each=12` (1/6 rouge avant), `saisie-temps.spec.ts` 21/21 en `--repeat-each=3`. **Statut : close.**
 
 ### INC-288 — les politiques de lecture des tables filles d'une affaire évaluent les droits à chaque ligne
 
@@ -8035,6 +8055,8 @@ le commentaire de la preuve cite pour `commentaires-gestes.spec.ts`). **Comporte
 (`docs/CloudWorker.md` §4.1 bis) : la preuve survole la carte et attend la fin de la transition avant d'asserter l'opacité
 — ce que fait déjà `commentaires-gestes.spec.ts` —, sans temporisation ajoutée. **Statut : ouverte.**
 
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — rejoué sous verrou de campagne, en série, sur la pile courante : `connexion.spec.ts` 17/17 passés, puis 51/51 en `--repeat-each=3`. **Non reproduit.** La cause décrite à la fiche tient à la charge d'une campagne complète, que ce rejeu fichier par fichier n'exerce pas ; la fiche **reste ouverte** jusqu'à ce que la prochaine campagne complète de la session de livraison la rende verte (alors close sur cette preuve), ou rouge (alors la trace est celle de la fiche mère INC-310).
+
 ### INC-301 — le fil d'activité nomme une étape par son nœud, et ignore la surcharge que le board affiche
 
 *Relevé le 2026-10-25 par la session planifiée de `CRM-037` (décision 690), en corrigeant le même défaut sur la fiche.*
@@ -8122,6 +8144,8 @@ retour du focus après la confirmation dépend d'un rendu que la charge retarde,
 inchangé**, aucune preuve assouplie. **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : `CRM-077` mesure l'élément
 focalisé au moment de l'échec (trace Playwright) et fait attendre la preuve sur l'état qui précède le focus, jamais sur
 une temporisation. **Statut : ouverte.**
+
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — rejoué sous verrou de campagne, en série, sur la pile courante : `corbeille.spec.ts` 26/27 passés (l'échec, `corbeille.spec.ts:173`, est un 503 de transport — voir INC-311), puis 81/81 en `--repeat-each=3`. **Non reproduit.** La cause décrite à la fiche tient à la charge d'une campagne complète, que ce rejeu fichier par fichier n'exerce pas ; la fiche **reste ouverte** jusqu'à ce que la prochaine campagne complète de la session de livraison la rende verte (alors close sur cette preuve), ou rouge (alors la trace est celle de la fiche mère INC-310).
 
 ### INC-306 — `verify-mail-infra.sh` §6 : deux contrôles du journal de `stalwart-init` rendent un faux verdict
 
@@ -8232,6 +8256,8 @@ instabilités sous la charge d'une campagne de près d'une heure, préexistantes
 fois sous charge est traité par son unité comme INC-295 et INC-305 l'ont été — attendre l'état que le scénario
 asserte (focus, transition, réponse), jamais par une temporisation. **Statut : ouverte.**
 
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — **Mère du lot, rejouée par ses fiches.** Ce que le rejeu fichier par fichier ferme ou écarte : INC-284, INC-287 et INC-237 corrigées (voir leurs fiches) ; INC-219, INC-224, INC-225, INC-227, INC-232, INC-235, INC-236, INC-300 et INC-305 **non reproduites** (leur cause est la charge de la campagne complète). **Cause nouvelle mesurée** : des 503 de transport sur `session/prolonger` (INC-311), deux en quelques centaines de scénarios, qui font rougir n'importe quel scénario que traverse la prolongation de session. **Statut : ouverte**, jusqu'à la campagne complète de la session de livraison et l'arbitrage d'INC-311.
+
 ### INC-311 — L'ouverture d'une session échoue par intermittence (`service_indisponible`), et la cause n'est pas journalisée
 
 *Relevé le 2026-10-26 par la session de `CRM-072`, sur le signalement de la session de `CRM-111`.* **Constat**, dans les
@@ -8264,6 +8290,8 @@ quelle connexion de démonstration.
 **Comportement laissé inchangé.** **Issue proposée** : faire journaliser par la fonction `session` le statut et le code
 PostgREST (`code`, jamais `message` ni `details`, qui peuvent porter des données) de toute réponse en erreur, puis
 reproduire. Sans ce code, toute correction serait une conjecture (`CLAUDE.md` §18). **Statut : ouverte.**
+
+**Mise à jour du 2026-11-26 (tri du lot des intermittents d'interface, session 7a)** — **Deux occurrences de plus, sur `session/prolonger`**, en rejouant le lot des intermittents : `corbeille.spec.ts:173` (06:19 UTC) et `objectifs.spec.ts:154` (07:07 UTC) rougissent sur `console.error: Failed to load resource: 503`. Kong journalise `POST /functions/v1/session/prolonger … 503 0` et l'environnement des fonctions « connection aborted (uri: "/session/prolonger") » : le même défaut de transport que pour `session/ouvrir`, deux fois en un peu plus de 900 scénarios joués. **Lecture** : c'est une cause probable des scénarios « sous charge » d'INC-310, indépendante de tout scénario. **À arbitrer** (infrastructure, spécification d'abord) : la réserve de connexions de Kong vers les fonctions, ou une reprise unique de la requête par la fonction côté appelant.
 
 ### INC-312 — Juste après une reconstruction, le seed meurt sur l'envoi de démonstration : le worker trouve le stockage injoignable
 

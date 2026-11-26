@@ -9,6 +9,8 @@
 //
 // Aucune réponse n'est substituée : les noms viennent des lectures réelles du seed, sous la RLS du compte connecté.
 // Le repli est atteint par `Tab` et ouvert par `Entrée` : un focus posé par script ne prouverait rien du clavier.
+// @verifies INC-284, Tri du lot des intermittents d'interface (docs/BACKLOG.md) — la commande de recherche à icône sous `lg` donne
+//           le focus au champ (docs/SPEC-recherche.md §14.3 ; docs/DESIGN_SYSTEM.md §5.46)
 // @verifies INC-332 (docs/INCONSISTENCY_REPORT.md) — sous `md`, une seule ligne de commandes, le nom de la session en `sr-only`
 //           (docs/DESIGN_SYSTEM.md §12.2)
 // *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
@@ -236,9 +238,8 @@ test.describe('le repli « … » au clavier', () => {
 		await expect(fil(page)).toBeVisible()
 		await page.getByTestId('ouvrir-recherche').click()
 		await expect(fil(page)).toBeHidden()
-		// `Échap` est écouté par le champ. Sous `lg`, la commande à icône ne lui donne pas le focus — mesuré ici, antérieur
-		// à `CRM-110` et consigné (INC-284) : le scénario, qui porte sur le fil et non sur la recherche, y clique.
-		await page.getByTestId('champ-recherche').click()
+		// `Échap` est écouté par le champ : la commande à icône lui donne donc le focus, sans autre clic (INC-284, docs/SPEC-recherche.md
+		// §14.3). Sous `lg`, le champ n'est affiché qu'au rendu qui suit l'ouverture, et le focus d'un élément masqué est sans effet.
 		await expect(page.getByTestId('champ-recherche')).toBeFocused()
 		await page.keyboard.press('Escape')
 		await expect(fil(page)).toBeVisible()

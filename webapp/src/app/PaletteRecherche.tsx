@@ -23,6 +23,8 @@
 // @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la palette nomme l'espace de chaque résultat à partir de deux espaces
 //       lus ; aucun filtre, exception maintenue (décision 963 ; docs/SPEC-espace-courant.md §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 
+// @spec INC-284 (docs/INCONSISTENCY_REPORT.md), Tri du lot des intermittents d'interface (docs/BACKLOG.md) — sous `lg`, la commande à icône donne
+//       le focus au champ une fois affiché (docs/SPEC-recherche.md §14.3 ; docs/DESIGN_SYSTEM.md §5.46)
 // @spec CRM-159 (docs/BACKLOG.md) — tranche T2 : sous les résultats, les mails masqués par une pastille cachée — un lien vers
 //       l'inbox, la pastille activée, pour une pastille de l'espace courant ; un texte qui nomme l'espace sinon
 //       (docs/SPEC-mail-subsystem.md §31.13.6 ; docs/DESIGN_SYSTEM.md §5.111 ; décision 958)
@@ -114,6 +116,16 @@ export function PaletteRecherche({
 	useEffect(() => {
 		onOuvertureChange?.(ouvert)
 	}, [ouvert, onOuvertureChange])
+
+	// INC-284 (docs/SPEC-recherche.md §14.3, docs/DESIGN_SYSTEM.md §5.46) : SOUS `lg`, la commande à icône ouvre la palette et le
+	// champ n'est affiché qu'au rendu qui suit — le focus que `ouvrir()` lui donne dans le tour de l'ouverture tombe sur un
+	// élément masqué et reste sans effet, la commande démontée laissant le focus au document, d'où un champ sans focus où `Échap`
+	// ne ferme rien. Le focus se pose donc ici, une fois le champ affiché ; il n'agit que si le champ ne l'a pas déjà (l'ouverture
+	// par le champ lui-même, ou par la frappe, ne change rien).
+	useEffect(() => {
+		if (!ouvert || globalThis.document?.activeElement === champ.current) return
+		champ.current?.focus()
+	}, [ouvert])
 
 	const fermer = useCallback((rendreFocus: boolean) => {
 		setOuvert(false)

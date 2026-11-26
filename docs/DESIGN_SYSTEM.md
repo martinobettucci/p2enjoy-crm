@@ -4677,6 +4677,8 @@ parce qu'elle porte sur le produit entier, et non sur l'utilisateur.
   qu'on écrit. Sous `md` elle n'est **pas rendue** : il n'y a pas de clavier à qui l'enseigner, et
   la place manque.
 
+- **SOUS `lg`, LA COMMANDE À ICÔNE DONNE LE FOCUS AU CHAMP, sans autre geste** (INC-284) : le champ n'est affiché qu'au rendu qui suit l'ouverture, et le focus est posé à ce rendu — `Échap`, que le champ écoute, referme alors la palette. Un focus demandé dans le tour de l'ouverture tomberait sur un élément masqué.
+
 - **LE FOCUS NE QUITTE JAMAIS LE CHAMP, ET C'EST CETTE RÈGLE QUI DÉCIDE LA FORME.** Les flèches
   déplacent un **résultat actif**, pas le focus : l'utilisateur corrige son terme en permanence,
   c'est le geste même d'une palette, et un focus descendu dans la liste ferait perdre la frappe

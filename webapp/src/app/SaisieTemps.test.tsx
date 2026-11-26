@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-temps.md §6.3 (la case « En heures » qui ne se décoche pas), §7.1 (« Saisir pour » réservé aux
 //           administrateurs), §7.2 (lignes, cellule qui s'enregistre seule, Entrée qui descend, une seule écriture à la
 //           fois, annonce du dépassement) ; docs/DESIGN_SYSTEM.md §5.54
+// @verifies INC-287 (docs/INCONSISTENCY_REPORT.md) — une flèche frappée dès la prise de focus d'une case remplie la quitte, sans attendre la sélection
+//           complète que le rendu suivant pose (docs/SPEC-temps.md §6.3 ; Tri du lot des intermittents d'interface, docs/BACKLOG.md)
 // @verifies INC-282 (docs/INCONSISTENCY_REPORT.md) — une cellule quittée puis reprise pendant son envoi ne renvoie pas
 //           l'ancienne valeur (aucun `DELETE` de la ligne qu'elle vient de créer), et `Entrée` ne vole pas le focus parti
 //           ailleurs pendant l'envoi ; reproduit d'après la trace de e2e/ui/saisie-temps.spec.ts:102
@@ -256,5 +258,24 @@ describe('INC-282 — la cadence de Playwright : la saisie suivante commence pen
 		fireEvent.change(champ('Grands comptes'), { target: { value: '1' } })
 		fireEvent.keyDown(champ('Grands comptes'), { key: 'Enter' })
 		await waitFor(() => expect(document.activeElement).toBe(champ('Studio')))
+	})
+})
+
+describe('INC-287 — la flèche frappée avant que la sélection complète soit posée', () => {
+	it('une flèche gauche frappée dès la prise de focus d’une case remplie la quitte, comme sur une case dont la sélection est posée', () => {
+		const saisies: Saisie[] = [
+			{ id: 'a', jour: '2026-06-01', minutes: 105, track_id: null, channel_id: 'c1', card_id: null },
+			{ id: 'b', jour: '2026-06-02', minutes: 105, track_id: null, channel_id: 'c1', card_id: null },
+		]
+		const { client } = clientFactice(saisies)
+		monter(client)
+		return screen.findByRole('textbox', { name: 'Refonte de site, mardi 2 juin' }).then((mardi) => {
+			const lundi = screen.getByRole('textbox', { name: 'Refonte de site, lundi 1 juin' })
+			// La sélection complète est posée à l'image suivante (`requestAnimationFrame`) : la flèche arrive AVANT elle, à la cadence
+			// de Playwright, et trouve la case remplie sans sélection.
+			act(() => mardi.focus())
+			fireEvent.keyDown(mardi, { key: 'ArrowLeft' })
+			expect(document.activeElement).toBe(lundi)
+		})
 	})
 })

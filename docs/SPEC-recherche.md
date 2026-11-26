@@ -1004,6 +1004,7 @@ La **troncature est écrite** quand la liste est pleine, jamais laissée à devi
 | Touche | Effet |
 |---|---|
 | `Cmd+K` / `Ctrl+K` | ouvre la palette et porte le focus dans le champ ; **rouvre-la si elle est ouverte** en resélectionnant le texte, jamais ne la referme |
+| commande à icône (sous `lg`) | ouvre la palette et porte le focus dans le champ, **sans autre geste** : le champ n'est affiché qu'au rendu qui suit l'ouverture, et le focus est posé à ce rendu — *ajouté le 2026-11-26, INC-284* |
 | `Flèche bas` | descend d'un résultat ; depuis le dernier, revient au premier |
 | `Flèche haut` | monte d'un résultat ; depuis le premier, va au dernier |
 | `Entrée` | suit le résultat **actif** ; sans résultat actif, ne fait rien |

@@ -21164,8 +21164,8 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 *Chaque fiche est rejouée sous verrou de campagne, en série ; ce qui ne reproduit plus est clos avec sa preuve et sa cause probable ; ce qui reproduit est corrigé à la cause (test rouge avant, jamais l'assertion) ; ce qui exige un arbitrage est remonté à la session de livraison. Fiches : `docs/INCONSISTENCY_REPORT.md`. Connecteur MCP : sans objet.*
 
-- [@] **Fiches du lot** : INC-310 (fiche mère), INC-235, INC-232, INC-225, INC-305, INC-300, INC-284, INC-287, INC-224, INC-236, INC-227, INC-219, INC-237.
-  *Prise en charge : session interactive 4891a451 (p2enjoy-crm-7a) depuis 2026-11-26 05:17 UTC — état avant : [ ] ; confiée par la session de livraison (11)*
+- [x] **INC-284, INC-287, INC-237 corrigées** (décision 1005) : rouge avant, vert après ; `fil-ariane` 42/42, recherche 42/42, `temps-fiche-affaire` 12/12, `captures-palier` 3/3.
+- [~] **INC-219, INC-224, INC-225, INC-227, INC-232, INC-235, INC-236, INC-300, INC-305, INC-310 : non reproduites au rejeu fichier par fichier** ; elles se closent sur une campagne complète verte de la session de livraison. **INC-311** (503 de transport sur `session/prolonger`, deux occurrences mesurées) remontée pour arbitrage : infrastructure, spécification d'abord.
 
 ## Correctif — INC-373 (2026-11-26, demandé par la session de livraison)
 

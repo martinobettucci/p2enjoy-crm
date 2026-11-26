@@ -1,3 +1,5 @@
+// @spec INC-287 (docs/INCONSISTENCY_REPORT.md), Tri du lot des intermittents d'interface (docs/BACKLOG.md) — une flèche frappée dès la prise de focus d'une case
+//       remplie la quitte (docs/SPEC-temps.md §6.3, §7.1)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T3.d — à partir de deux espaces lus, la grille couvre TOUS les espaces : les lignes
 //       groupées par espace (une ligne de groupe à son nom), chaque cellule écrite dans l'espace de sa ligne, les totaux par jour
 //       ceux de la personne tous espaces confondus ; « Saisir pour » groupe les membres par espace administré, et choisir un
@@ -727,6 +729,8 @@ export function CelluleTemps({
 		if (!focus && enVol.current === null) setTexte(valeurDeChamp(minutes, mode))
 	}, [minutes, mode, focus])
 	const refChamp = useRef<HTMLInputElement>(null)
+	// INC-287 : vrai entre la prise de focus et la pose de la sélection complète (image suivante), tant que rien n’a été saisi.
+	const selectionAttendue = useRef(false)
 
 	const nom = t('time.cell.aria', { cible: ligne.libelle, jour: nomJourLong(jour) })
 
@@ -782,7 +786,13 @@ export function CelluleTemps({
 
 	const surTouche = (e: KeyboardEvent<HTMLInputElement>) => {
 		const champ = e.currentTarget
-		const toutSelectionne = champ.value === '' || (champ.selectionStart === 0 && champ.selectionEnd === champ.value.length)
+		// INC-287 : la sélection complète est posée à l'image qui suit la prise de focus ; une flèche frappée avant elle — la cadence
+		// d'une personne rapide, ou de Playwright — trouve la case remplie sans sélection. La sélection est alors due, non encore
+		// posée : la case n'a pas été éditée, la quitter ne perd rien.
+		const toutSelectionne =
+			champ.value === '' ||
+			selectionAttendue.current ||
+			(champ.selectionStart === 0 && champ.selectionEnd === champ.value.length)
 		if (e.key === 'Enter') {
 			e.preventDefault()
 			void enregistrer().then((ok) => {
@@ -836,9 +846,14 @@ export function CelluleTemps({
 					// Reprise pendant un envoi : le champ garde la valeur envoyée, non l'ancienne (INC-282).
 					if (enVol.current === null) setTexte(valeurDeChamp(minutes, mode))
 					const element = e.currentTarget
-					requestAnimationFrame(() => element.select())
+					selectionAttendue.current = true
+					requestAnimationFrame(() => {
+						selectionAttendue.current = false
+						element.select()
+					})
 				}}
 				onChange={(e) => {
+					selectionAttendue.current = false
 					setTexte(e.target.value)
 					if (etat.statut !== 'repos') setEtat({ statut: 'repos' })
 				}}
