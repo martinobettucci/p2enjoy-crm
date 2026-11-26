@@ -42696,3 +42696,7 @@ observées (Pilotage et saisie de tous les espaces, fuseau, Pilotage à 390 px),
 **Lecture de la production avant** (§2.81 geste 1, lecture seule) : 0 couple personne × jour au-delà de 420 minutes ; registre à
 200 (`0202`) ; un seul espace. **Sauvegarde** : `sauvegardes/avant-0203-20261126T044710Z.dump` dans la cellule (7,3 Mo, 3627
 entrées à `pg_restore --list`).
+
+### `INC-370` et `INC-368` — fermeture
+
+*2026-11-26, session `p2enjoy-crm-dd`.* **Vérifié** : `verify-colonnes-protegees.sh` rejoué entier sous verrou `dd-370b` : 60 contrôles, aucune anomalie (jetons redemandés après chaque reconstruction ; section « specs de l'unité » verte) ; `verify-cards.sh` : 50 contrôles verts en 21 min (63 avant). Les deux unités de la session de livraison sont closes.

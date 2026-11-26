@@ -13,6 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **INC-370, `verify-colonnes-protegees.sh` redemande ses jetons** après chaque reconstruction de la base (le jeton interne d'un script vaut 300 s) ; INC-371 : même correction pour `verify-workflows.sh` et contrôle de sources contre la récidive. Outillage de développement : rien ne change dans le produit livré.
 - **INC-368, les harnais d'unité ne rejouent que les specs de leur unité** : `verify-cards.sh` et `verify-colonnes-protegees.sh` ne relancent plus les suites `e2e` entières (`verify-cards.sh` : 63 min → 21 min) ; `--suites-completes` les rétablit. Outillage de développement : rien ne change dans le produit livré.
 - **INC-369, `verify-board.sh` montre la cause de son rouge** : au rejeu final des tests unitaires, un échec affiche les lignes en échec, le bilan et la fin du journal. Outillage de développement : rien ne change dans le produit livré.
 - **INC-139 b, `verify-board.sh` au contrat actuel** : le harnais lit les routes d'un espace (`enEspace(…)`), exige son motif de dégradation en entier — il pouvait « dégrader » sans rien modifier — et ne compte que les cards du seed ; 73 contrôles, aucune anomalie. Outillage de développement : rien ne change dans le produit livré.
