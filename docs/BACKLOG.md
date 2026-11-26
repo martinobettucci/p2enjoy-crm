@@ -18818,14 +18818,12 @@ sur un compte sans channel lisible (l'état vide) ; captures aux quatre paliers 
 **MCP** : question 1, **oui** : lire les couloirs existants et aider à les créer (exemple : « les affaires froides depuis
 plus de six mois »). Question 2 : **famille existante `structure`** (décision 861), actions `consulter`, `ajouter`,
 `modifier`, `supprimer` ; aucune migration de la liste fermée.
-**Spécification** : **écrite le 2026-11-26 avant le code** — `docs/SPEC-couloirs.md` (modèle `lanes`, `channel_lanes`, `lane_members`, calcul en base, board, droits, MCP, tranches T1 à T5). **Six questions
-restent au responsable avant le code** (§13 : l'import d'un couloir manuel en conflit, qui replie, qui crée un couloir de channel, ce que « froide » veut dire, la suppression d'un couloir général utilisé, la
-visibilité d'une affaire en sommeil) ; chacune porte la recommandation de la session.
+**Spécification** : **écrite le 2026-11-26 avant le code** — `docs/SPEC-couloirs.md` (modèle `lanes`, `channel_lanes`, `lane_members`, calcul en base, board, droits, MCP, tranches T1 à T5). **Les six questions du §13 sont répondues** (décision 1009, 2026-11-26) : toutes les recommandations de la session sont retenues ; **le code est débloqué**.
 **DoD** : fixée par `docs/SPEC-couloirs.md` §11 (unitaires, pgTAP, E2E souris et clavier, refus d'autorisation directs, captures
 aux quatre paliers, seed, manuel, design system).
 
 - [x] **Spécification**, committée avant le code le 2026-11-26 (décision 1007).
-- [ ] **Réponses du responsable aux six questions** de `docs/SPEC-couloirs.md` §13 — **bloque le code** ; la session de livraison les groupe avec les autres arbitrages.
+- [x] **Réponses du responsable aux six questions** de `docs/SPEC-couloirs.md` §13 (décision 1009, 2026-11-26) : recommandations retenues ; **code débloqué**, sous réserve de la libération du gel de livraison.
 - [ ] **T1** — migration (`lanes`, `channel_lanes`, `lane_members`, RLS, fonctions), pgTAP, API, types.
 - [ ] **T2** — le board lit et rend les couloirs, repli partagé, « Hors couloir », états ; unitaires, E2E souris et clavier, captures, DS.
 - [ ] **T3** — créer, modifier, supprimer, importer, réordonner ; mode sélection ; aperçu de règle.
@@ -21009,7 +21007,7 @@ corriger sans arbitrage l'est par lots cohérents, preuve rouge avant et verte a
   - [ ] **`INC-355`** — le contrôle compte les politiques de `storage.objects` **par bucket** et nomme les cinq ;
   - [ ] **`INC-312`** — le seed attend sa ligne `sent` au-delà du premier délai de reprise du worker (60 s) et cite la dernière erreur de l'envoi à l'échec ;
   - [ ] **`INC-298`** — cause identifiée (la même signature qu'`INC-366`), atténuée par `INC-366` a ; clore par une preuve de reconstructions enchaînées sous verrou ;
-  - [ ] **`INC-339`** — sous-points : comptes révisés (1, 2), jeton après restauration de `verify-copie-workflow.sh` (3) et **le contrôle `jetons-harnais.test.ts` étendu** aux fonctions qui reconstruisent, `verify-migrations.sh` (4, **une décision du responsable**, voir la fiche), `verify-stack.sh` (5, à diagnostiquer au rejeu).
+  - [ ] **`INC-339`** — sous-points : comptes révisés (1, 2), jeton après restauration de `verify-copie-workflow.sh` (3) et **le contrôle `jetons-harnais.test.ts` étendu** aux fonctions qui reconstruisent, `verify-migrations.sh` (4 : **la décision 1009 point 7 n'est pas réalisable telle qu'écrite, fiche `INC-374`, arbitrage demandé**), `verify-stack.sh` (5, à diagnostiquer au rejeu).
 
 ### CRM-166 — Un assistant IA dans l'inbox : il propose un plan d'actions sur les mails sélectionnés, que l'on accepte ou refuse mail par mail `[P]`
 *Prise de d5b44a2d (p2enjoy-crm-30) libérée le 2026-11-26 : T1, T2 et T3 faites et vérifiées en développement (sous-ensembles du périmètre ; la campagne complète est celle de la session de livraison). Reste, pour le responsable en production : le geste du contrat §2.87 (migration `0207`, recréation de `functions`, webapp), puis le constat d'un plan sur le vrai modèle.*
@@ -21200,3 +21198,5 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 - [@] **Diagnostic INC-311 / INC-292** : constat horodaté (journaux Kong et fonctions), reproduction déterministe sur `functions:9000` puis par Kong, remèdes avec compromis, effet sur la production.
   *Prise en charge : session interactive 4891a451 (p2enjoy-crm-7a) depuis 2026-11-26 07:14 UTC — état avant : [ ] ; confiée par la session de livraison (11)*
+
+- [ ] **INC-374 — la décision 1009 (7), « une migration nouvelle pose ce qui manque à la `0106`, la `0125` et la `0132` », ne peut pas faire converger leur rejeu** : arbitrage du responsable demandé (fiche `INC-374`) ; aucun code avant.

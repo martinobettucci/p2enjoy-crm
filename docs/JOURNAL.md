@@ -42827,3 +42827,8 @@ migrations, le responsable choisit l'autre voie.*
    nouveau — et non l'exemption nommée que recommandait dd. Les trois fichiers ne sont pas réécrits.
 **Conséquences** : `docs/SPEC-couloirs.md` §13 se clôt sur ces réponses (dd) ; le code de CRM-130 est débloqué. INC-339 (4)
 se spécifie comme une migration nouvelle (numéro pris à la synchronisation), avec son entrée au contrat de déploiement.
+
+### décision 1010 — `CRM-130` : les réponses consignées dans la spécification ; `INC-339` (4) : la décision 1009 (7) ne peut pas s'exécuter telle qu'écrite (`INC-374`)
+
+*2026-11-26, session `p2enjoy-crm-dd`, après la décision 1009 de la session de livraison ; documents seuls (gel de livraison).*
+**`CRM-130`** : `docs/SPEC-couloirs.md` §13 devient « Réponses du responsable » ; les réponses entrent dans le corps (§3 « froide », §7.4 l'import refusé, §8 les droits) ; le backlog passe « code débloqué ». **`INC-339` (4)** : en préparant la migration nouvelle, la session a relu le harnais — il joue la copie de chaque fichier **immédiatement après lui** ; la `0106` échoue sur son propre texte (`create function` sans `or replace`) et le contrôle des deux gardes **lit les fichiers** de la `0125` et de la `0132`. **Une migration écrite après eux ne peut ni s'intercaler ni les modifier** : consigné en `INC-374` avec trois voies, la recommandation d'origine (l'exemption nommée, liste fermée) maintenue ; aucune migration n'est écrite avant la réponse. **Rejeté** : écrire la migration « pour faire bien » — elle laisserait les trois rouges et prétendrait le contraire.

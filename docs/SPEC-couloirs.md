@@ -57,8 +57,8 @@ Un couloir a une **portée** (`scope`) :
 - Une règle **vide** (`{}`) est refusée : elle retiendrait tout et ferait d'un couloir une copie du board. Au moins une clé est exigée.
 - **Toutes les clés présentes s'ajoutent (ET).** Une règle qui veut « l'une ou l'autre » se fait avec deux couloirs et le départage du §5.1.
 - **La clé nouvelle `inactive_for_days` répond à la demande du responsable** : « les affaires froides depuis plus de six mois » (décision 860). L'assistant la
-  pose en jours (« six mois » ≈ 180 jours). **Ce que « froide » mesure n'est pas tranché** : la recommandation de la session est le dernier événement de
-  l'affaire (§13, question 4) ; la définition exacte s'écrit ici dès que le responsable répond.
+  pose en jours (« six mois » ≈ 180 jours). **« Froide » est tranchée** (décision 1009, point 4) : le temps écoulé depuis le **dernier événement de l'affaire** (`card_events`, tout événement), à défaut depuis
+  sa **création** ; la règle retient les affaires dont ce temps atteint `inactive_for_days` jours. Le calcul porte sur l'**affaire** : tous ses rattachements le suivent.
 - Une règle **ne contourne jamais un droit** (même principe que `docs/SPEC-vues-import-export.md` §2.2) : elle ne fait que ranger des affaires que la personne lit déjà.
 
 ## 4. Le modèle de données
@@ -219,7 +219,7 @@ et « Sortir du couloir » (`lane_unplace`). L'exclusivité est dite avant le ge
 
 « Importer un couloir… » liste les couloirs de portée `track` (de ce track) et `workspace` **pas encore liés** à ce channel, avec leur nature et le nombre de channels qui les
 utilisent. L'import s'ajoute **sous** les couloirs du channel. Si le couloir est manuel et que certains de ses membres sont déjà dans un autre couloir manuel de ce channel, le geste
-suit la réponse à la question 1 du §13.
+est **refusé** (décision 1009, point 1), avec le nombre d'affaires en conflit.
 
 ### 7.5 Droits
 
@@ -227,16 +227,16 @@ La règle est **en base** (`CLAUDE.md` §10) ; l'écran n'en est que le miroir (
 
 ## 8. Qui lit, qui écrit — en base
 
-*Tant que les questions 2 et 3 du §13 sont ouvertes, la colonne « Recommandation » est celle que le code prendra par défaut ; la réponse du responsable la remplace ici, avant le code.*
+*Réponses du responsable du 2026-11-26 (décision 1009, points 2, 3 et 5) : toutes les recommandations sont retenues ; la dernière colonne dit ce que la base applique.*
 
-| Geste | Règle (RLS et fonctions) | Recommandation |
+| Geste | Règle (RLS et fonctions) | Réponse du responsable |
 |---|---|---|
 | lire les couloirs d'un channel | tout membre qui lit le channel (`app.can_read_channel`) | — (ferme) |
 | lire le catalogue d'import d'un track / de l'espace | qui lit le track (`app.can_read_track`) / tout membre de l'espace | — (ferme) |
 | créer, modifier, supprimer un couloir de portée `track` ou `workspace` | **administrateur de l'espace** (`app.is_workspace_admin`) | ferme : un couloir général touche plusieurs channels |
-| créer, modifier, supprimer, importer, réordonner un couloir de portée `channel` | question 3 | administrateur **ou** qui écrit les affaires du channel (`app.can_write_channel`) |
+| créer, modifier, supprimer, importer, réordonner un couloir de portée `channel` | **l'administrateur de l'espace** (`app.is_workspace_admin`) **ou** qui écrit les affaires du channel (`app.can_write_channel`) | retenu (point 3) |
 | placer / sortir une affaire d'un couloir manuel | qui **écrit l'affaire** (`app.can_write_card`) ; le geste ne touche que le rattachement de cette affaire | — |
-| replier / déplier (état partagé) | question 2 | qui écrit les affaires du channel ; sinon, pour la session seulement |
+| replier / déplier (état partagé) | qui écrit les affaires du channel (`app.can_write_channel`) ; un lecteur déplie pour sa seule session | retenu (point 2) |
 
 Privilèges explicites (`revoke all` puis `grant`), **aucun pour `anon`**. Les écritures passent par les fonctions du §5.2 ; `select` seul est ouvert en lecture directe. **Preuves de refus** par
 requête directe, jetons réels : un lecteur qui crée, un business developer qui crée un couloir de portée `workspace`, une personne d'un autre espace qui lit ou importe, un import dans un
@@ -288,21 +288,15 @@ seed ; manuel ; DS ; changelog `[Non publié]` ; contrat de déploiement (migrat
 La **vue liste** n'a aucun couloir. Aucune **revue**, aucun **sous-budget**, aucune règle métier par couloir. Aucun couloir **créé par le produit** (trimestre ou autre générateur). Aucune indication
 « **aussi retenue par** » sur la carte. Aucun **glisser-déposer vers un couloir**. Aucune **règle « l'un ou l'autre »** dans un seul couloir. Aucun couloir sur l'écran « Ma journée » ou le carnet.
 
-## 13. Questions au responsable — à trancher AVANT le code
+## 13. Réponses du responsable — décision 1009 (2026-11-26) : toutes les recommandations de la session sont retenues
 
-*Posées par la session ; transmises par la session de livraison (consigne du 2026-11-26). Chacune porte la recommandation de la session ; aucune n'est appliquée avant sa réponse.*
+*Les six questions posées par la session le 2026-11-26 (décision 1007) sont répondues ; **le code est débloqué**. Les réponses sont reprises dans le corps de la spécification (§3, §4.3, §5.3, §7.4, §8).*
 
-1. **Import d'un couloir manuel dont des membres sont déjà dans un autre couloir manuel du channel.** *Recommandation : **refuser l'import** avec le nombre d'affaires en conflit et la manière de les
-   sortir d'abord* (l'exclusivité du §4.3 interdit de les mettre dans deux couloirs ; les déplacer sans le dire surprendrait ; garder l'ordre le plus ancien rendrait le résultat illisible).
-2. **Qui replie ou déplie le couloir pour tout le monde** (l'état partagé de la décision 860) ? *Recommandation : qui écrit les affaires du channel ; un lecteur peut déplier pour sa session seulement.*
-3. **Qui crée, modifie, supprime un couloir de portée `channel`** ? *Recommandation : l'administrateur **ou** qui écrit les affaires du channel* (c'est un rangement visuel, pas une structure) — les
-   couloirs de portée `track` et `workspace` restent réservés à l'administrateur de l'espace (ils touchent plusieurs channels).
-4. **Que veut dire « froide »** (`inactive_for_days`, §3) ? Trois lectures : le **dernier événement** de l'affaire (création, déplacement, commentaire, message — `card_events`), l'**ancienneté dans
-   l'étape** (`entered_step_at`), ou une **prochaine action en retard** de N jours (`next_action_at`). *Recommandation : le dernier événement de l'affaire, à défaut sa date de création* — c'est ce que
-   « froide » veut dire à l'oreille, et ni `updated_at` (qu'un traitement automatique bouge) ni l'étape ne le disent.
-5. **Supprimer un couloir général encore utilisé dans d'autres channels** : *Recommandation : autorisé pour l'administrateur, après une confirmation qui nomme le nombre de channels concernés* (le
-   couloir disparaît partout, comme sa modification s'applique partout) ; le simple retrait d'un channel reste un geste à part.
-6. **Une affaire en sommeil, archivée ou en corbeille** paraît-elle dans un couloir ? *Recommandation : le couloir ne change rien à la visibilité du board* (§5.3) — une affaire absente du board est absente
-   de ses couloirs, et réapparaît dans le sien quand le board la montre.
+1. **Import d'un couloir manuel dont des membres sont déjà dans un autre couloir manuel du channel** : l'import est **refusé**, et le message nomme le nombre d'affaires en conflit (l'exclusivité du §4.3 interdit de les mettre dans deux couloirs).
+2. **Qui replie ou déplie pour tout le monde** : qui écrit les affaires du channel ; un lecteur déplie pour sa seule session (`sessionStorage`).
+3. **Qui crée, modifie, supprime un couloir de portée `channel`** : l'administrateur de l'espace **ou** qui écrit les affaires du channel ; les portées `track` et `workspace` restent réservées à l'administrateur.
+4. **Une affaire « froide »** : le temps depuis son **dernier événement** (`card_events`), à défaut depuis sa **création** (§3).
+5. **Supprimer un couloir général encore utilisé ailleurs** : l'administrateur seul, **après une confirmation qui nomme le nombre de channels** qui l'emploient ; le simple retrait d'un channel reste un geste à part.
+6. **Visibilité** : un couloir **ne change rien** à ce que le board montre (sommeil, archive, corbeille inchangés ; §5.3).
 
 **Connecteur MCP** (`CLAUDE.md`, « Toute fonctionnalité pose la question du connecteur MCP ») : **les deux questions sont répondues** (décision 861, point 2) — oui, famille existante `structure` (§9).
