@@ -18794,7 +18794,7 @@ sur un compte sans channel lisible (l'état vide) ; captures aux quatre paliers 
 
 ### CRM-130 — Les couloirs du board d'un channel : par règle ou par sélection, repliables, exclusifs par channel `[@]`
 
-*Prise en charge : p2enjoy-crm-dd (session interactive 152dd27d) depuis 2026-11-26 09:50 UTC — état avant : [ ] ; la spécification d'abord, aucun code avant elle.*
+*Prise en charge : p2enjoy-crm-dd (session interactive 152dd27d) depuis 2026-11-26 07:54 UTC — état avant : [ ] ; la spécification d'abord, aucun code avant elle.*
 *Prise libérée le 2026-11-26 par d5b44a2d (p2enjoy-crm-30), à la demande de la session de livraison : état réel [ ] — décisions 860 à 864 seules (comportement, départage, stockage, import) ; aucune spécification complète, aucun code, aucun test.*
 
 **Origine** : brainstorm du responsable, 2026-11-06 (décision 860).
@@ -18818,10 +18818,19 @@ sur un compte sans channel lisible (l'état vide) ; captures aux quatre paliers 
 **MCP** : question 1, **oui** : lire les couloirs existants et aider à les créer (exemple : « les affaires froides depuis
 plus de six mois »). Question 2 : **famille existante `structure`** (décision 861), actions `consulter`, `ajouter`,
 `modifier`, `supprimer` ; aucune migration de la liste fermée.
-**Spécification** : à écrire avant le code — modèle de données et migration, RLS, le board,
-`docs/DESIGN_SYSTEM.md`, i18n, le manuel, le seed, les outils MCP.
-**DoD** : à fixer avec la spécification (unitaires, pgTAP, E2E souris et clavier, refus d'autorisation directs, captures
-aux quatre paliers, seed, manuel).
+**Spécification** : **écrite le 2026-11-26 avant le code** — `docs/SPEC-couloirs.md` (modèle `lanes`, `channel_lanes`, `lane_members`, calcul en base, board, droits, MCP, tranches T1 à T5). **Six questions
+restent au responsable avant le code** (§13 : l'import d'un couloir manuel en conflit, qui replie, qui crée un couloir de channel, ce que « froide » veut dire, la suppression d'un couloir général utilisé, la
+visibilité d'une affaire en sommeil) ; chacune porte la recommandation de la session.
+**DoD** : fixée par `docs/SPEC-couloirs.md` §11 (unitaires, pgTAP, E2E souris et clavier, refus d'autorisation directs, captures
+aux quatre paliers, seed, manuel, design system).
+
+- [x] **Spécification**, committée avant le code le 2026-11-26 (décision 1007).
+- [ ] **Réponses du responsable aux six questions** de `docs/SPEC-couloirs.md` §13 — **bloque le code** ; la session de livraison les groupe avec les autres arbitrages.
+- [ ] **T1** — migration (`lanes`, `channel_lanes`, `lane_members`, RLS, fonctions), pgTAP, API, types.
+- [ ] **T2** — le board lit et rend les couloirs, repli partagé, « Hors couloir », états ; unitaires, E2E souris et clavier, captures, DS.
+- [ ] **T3** — créer, modifier, supprimer, importer, réordonner ; mode sélection ; aperçu de règle.
+- [ ] **T4** — seed, manuel, DS, textes, `scripts/verify-couloirs.sh`.
+- [ ] **T5** — outils MCP (famille `structure`), après `INC-286` lot 1.
 
 ## Demande du 2026-11-06 — trois arbitrages du responsable (décisions 865 à 867)
 
