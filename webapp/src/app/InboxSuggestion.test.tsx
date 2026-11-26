@@ -199,7 +199,7 @@ function clientFactice() {
 
 const CLIENT = clientFactice()
 
-vi.mock('../lib/supabase', () => ({ clientCrm: CLIENT }))
+vi.mock('../lib/supabase', () => ({ clientCrm: CLIENT, urlApiCrm: null, cleAnonymeCrm: null, porteurJeton: { lire: () => null } }))
 
 const { RouteInbox } = await import('./RouteInbox')
 

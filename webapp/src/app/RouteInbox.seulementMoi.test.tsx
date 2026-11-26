@@ -119,7 +119,7 @@ const CLIENT = {
 	from: (table: string) => ({ select: (colonnes: string) => requete(table, colonnes) }),
 }
 
-vi.mock('../lib/supabase', () => ({ clientCrm: CLIENT }))
+vi.mock('../lib/supabase', () => ({ clientCrm: CLIENT, urlApiCrm: null, cleAnonymeCrm: null, porteurJeton: { lire: () => null } }))
 vi.mock('./Authentification', () => ({
 	useAuthentification: () => ({
 		etat: { statut: 'authentifie', utilisateur: { id: 'moi-1', email: 'admin@p2enjoy.test' } },

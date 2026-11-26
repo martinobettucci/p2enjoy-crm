@@ -154,4 +154,6 @@
 	   date — quand l'arborescence n'en porte qu'une. */
 	--size-inbox-folders: 264px;
 	--size-inbox-list: 360px;
+	/* Largeur du panneau de l'assistant de l'inbox (docs/DESIGN_SYSTEM.md §5.116, `CRM-166`) : une largeur de COMPOSITION, comme celles de l'inbox. */
+	--size-assistant: 440px;
 }

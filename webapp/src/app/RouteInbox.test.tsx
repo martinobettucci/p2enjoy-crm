@@ -206,7 +206,7 @@ let refusMarquage: number | null = null
 // UNE fois et lit ses messages à l'appel.
 const CLIENT = clientFactice(() => messagesRendus)
 
-vi.mock('../lib/supabase', () => ({ clientCrm: CLIENT }))
+vi.mock('../lib/supabase', () => ({ clientCrm: CLIENT, urlApiCrm: null, cleAnonymeCrm: null, porteurJeton: { lire: () => null } }))
 
 const { RouteInbox } = await import('./RouteInbox')
 

@@ -123,6 +123,7 @@ valeur n'existe. Écrire `p-5` ne produit rien.
 | `--size-sidebar-icons` | 64 px | barre latérale repliée |
 | `--size-inbox-folders` | 264 px | colonne des dossiers de la boîte |
 | `--size-inbox-list` | 360 px | colonne de la liste des messages |
+| `--size-assistant` | 440 px | largeur du panneau de l'assistant de l'inbox (§5.116, `CRM-166`) |
 | `--size-placeholder` | 120 px | réserve d'un contenu absent |
 
 **Tokens de rupture** — les trois seuils responsive (§7) :
@@ -9348,6 +9349,16 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
 - **Annonces** : un `LiveRegion` poli dit chaque lot arrivé, chaque fil appliqué ou refusé, et la fin (« Plan prêt : 14 actions sur 9 mails »).
 - **Aucune couleur, aucune icône hors Lucide, aucun emoji.** Un seul jeton nouveau : `--size-assistant` (440 px), déclaré avec les tokens de
   dimension du §3.
+
+*Révisé à l'écriture du code (T2, 2026-11-26), après observation des captures aux quatre paliers :*
+- **Le focus n'est jamais perdu.** La demande finie, le bouton « Annuler la demande » qui le portait disparaît : le focus va à **la première ligne du plan** (`li` focalisable,
+  d'où `Tab` atteint « Accepter »), à défaut au champ. Après « Accepter » ou « Refuser », le focus revient à la ligne si le bouton qui le portait a quitté la page. La
+  confirmation de « Tout accepter » reçoit le focus sur « Annuler » (§5.13), ce qui la rend visible quand le panneau défile.
+- **Une action faite, refusée ou déclinée se lit sur sa pilule** (« · faite », « · refusée », « · déclinée »), en plus de l'état du fil.
+- **Le panneau défile à l'intérieur** (`max-h-[80vh]`) ; les lignes ne sont jamais coupées par la page. Il tient dans la fenêtre aux quatre paliers (mesuré : bords droit,
+  gauche et haut dans la fenêtre, aucun défilement horizontal de la page) ; sous `lg`, la bulle reste à 16 px du bord et le panneau couvre la liste, qu'on retrouve en le fermant.
+- **« Application en cours… »** remplace « Accepter » et « Refuser » le temps qu'un fil s'applique ou que sa confirmation attend ; les autres fils sont bloqués pendant ce temps.
+- **Les annonces passent par la région vivante de la page** (une seule par application, §8) : le lot reçu, le plan prêt, le fil appliqué, refusé ou en échec.
 
 ### 5.117 Réglages ▸ Fuseau horaire de l'espace — `INC-216` T2
 

@@ -5816,5 +5816,9 @@ peut pas faire est **refusée par la base** et dite sur la ligne du mail ; la fo
   ferme et rend le focus à la bulle ; dans le plan, `Tab` parcourt « Accepter » puis « Refuser » de chaque fil, puis « Tout accepter » ; après « Accepter », le focus
   reste sur la ligne (jamais perdu quand le fil quitte la liste derrière).
 - **L'état de la fonction** : la bulle lit `GET /ia/etat` **à son ouverture** (`lireEtatAssistant`) ; il n'est pas relu en boucle.
+- **Révisé à l'écriture du code (T2, 2026-11-26).** (1) « Tout le filtre » : le nombre de fils n'est **pas** lu à l'ouverture mais **à l'envoi** (`inbox_assistant_threads`, 51 au plus) ; plus de 50, la bulle le dit et **ne part pas**. (2) `onTermine` de la page vide la sélection : l'assistant reçoit donc
+  un rappel **`onApplique`** distinct, qui relit la liste, les compteurs et l'arborescence **sans** vider la sélection, pour que le plan et la sélection restent lisibles. (3) La capacité d'administrer
+  n'est **pas** passée : « Bloquer l'expéditeur » est offert comme tout autre geste, la base le refuse à qui n'a pas le droit et l'écran le dit sur la ligne (`CLAUDE.md` §10). (4) La bulle n'est rendue que sur la
+  liste des messages (ni la corbeille, ni les envois, ni les mails préparés) et seulement quand un dossier est choisi. (5) Les fichiers : `webapp/src/app/AssistantInbox.tsx`, `webapp/src/app/useAssistantInbox.ts`, `webapp/src/lib/assistant-inbox.ts`.
 - **Les captures** (`docs/SPEC-captures.md`) : le panneau fermé (la bulle), ouvert sans sélection, prêt, un plan arrivé, un fil appliqué, une confirmation, l'état
   dégradé, aux quatre paliers (§7 du design system) ; observées une à une (`CLAUDE.md` §16).

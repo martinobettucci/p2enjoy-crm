@@ -154,6 +154,7 @@ import {
 	type DossierEnvoi,
 } from '../lib/outbox'
 import { SelecteurClassement, lecteurBase } from './SelecteurClassement'
+import { AssistantInbox } from './AssistantInbox'
 import { ActionsGroupees, BilanBlocage, CaseSelection, FiltreExpediteur, VideExpediteur } from './ActionsGroupeesInbox'
 import { CLE_URL_EXPEDITEUR, lireExpediteurFiltre } from '../lib/filtre-expediteur'
 import { aUnFiltreExplicite, type FilCoche, type PorteeGroupee } from '../lib/actions-groupees'
@@ -2712,8 +2713,20 @@ export function RouteInbox() {
 		[arbre.etat],
 	)
 
+	// `CRM-156` : la portée de la sélection, sans ses fils — partagée par la barre des actions groupées et, depuis `CRM-166`, par l'assistant.
+	const porteeGroupeeBase: Omit<PorteeGroupee, 'fils'> = {
+		idWorkspace: espaceInbox,
+		dossier:
+			selection !== null && selection.genre === 'card' ? { genre: 'card', cardId: selection.cardId } : { genre: 'non-classes' },
+		seulementMoi: filtreCourrier === true,
+		pastilles: pastillesFiltre ?? [],
+		expediteur: expediteurFiltre,
+		sommeilVisible: mode === 'visibles',
+	}
+	const assistantVisible = dossierEnvoi === null && !corbeilleChoisie && !preparesChoisis && selection !== null
+
 	return (
-		<div className="flex flex-col h-full min-h-0" data-testid="route-inbox">
+		<div className="relative flex flex-col h-full min-h-0" data-testid="route-inbox">
 			<div className="flex items-center gap-2 px-4 py-3 border-b border-border lg:hidden">
 				<Inbox aria-hidden="true" size={18} className="text-brand" />
 				<span className="font-medium">{t('route.inbox.title')}</span>
@@ -2893,17 +2906,7 @@ export function RouteInbox() {
 							setCochees(new Map())
 							setToutLeFiltre(false)
 						},
-						portee: {
-							idWorkspace: espaceInbox,
-							dossier:
-								selection !== null && selection.genre === 'card'
-									? { genre: 'card', cardId: selection.cardId }
-									: { genre: 'non-classes' },
-							seulementMoi: filtreCourrier === true,
-							pastilles: pastillesFiltre ?? [],
-							expediteur: expediteurFiltre,
-							sommeilVisible: mode === 'visibles',
-						},
+						portee: porteeGroupeeBase,
 						edition: capacites.edition,
 						retention: retention.statut === 'pret' ? retention.donnees : null,
 						onTermine: () => {
@@ -2953,6 +2956,20 @@ export function RouteInbox() {
 					</>
 				)}
 			</div>
+			{assistantVisible ? (
+				<AssistantInbox
+					portee={porteeGroupeeBase}
+					fils={toutLeFiltre ? null : [...cochees.values()]}
+					retention={retention.statut === 'pret' ? retention.donnees : null}
+					onApplique={() => {
+						// Relu comme après une action groupée, SANS vider la sélection : le plan reste lisible (docs/SPEC-mail-subsystem.md §36.5, §36.9).
+						arbre.recharger()
+						liste.recharger()
+						fils.recharger()
+					}}
+					onAnnonce={setAnnonce}
+				/>
+			) : null}
 			<LiveRegion libelle={t('route.inbox.title')} message={annonce} />
 		</div>
 	)
