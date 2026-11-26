@@ -42742,3 +42742,7 @@ session sans son accord.
 **Conséquences.** Unité `INC-286` lot 1 (« Lot E » du backlog) `[@]`, spécification §19, trois tranches ; rien n'est poussé de
 `webapp/`, `supabase/`, `mcp/` avant l'annonce de fin de livraison de la session 11.
 **Vérifications.** Aucune : documents seuls.
+
+### `INC-371` — fermeture, et ce qu'elle a révélé
+
+*2026-11-26, session `p2enjoy-crm-dd`.* **Vérifié** : `verify-workflows.sh` sous verrou `dd-371` : la section 8 rend bien 403 après la reconstruction, jeton redemandé. **Rejeu arrêté** à la section 9 pour libérer le verrou (62 min). **Découvertes** : un comptage de triggers périmé et des suites entières trop longues (INC-373) ; et une régression de ma part dans INC-372 (message d'échec contenant « docker pull », refusé par le garde d'INC-367), corrigée — **leçon** : rejouer `npm run test:unit` avant de pousser un script, même quand la preuve de l'unité est verte.

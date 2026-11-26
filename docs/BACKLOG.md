@@ -21152,7 +21152,7 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 *Recensement des harnais qui gardent un jeton interne de 300 s par-dessus une opération longue. Spécification : `docs/SPEC-test-harness.md` §3.18 ; fiche INC-371. Connecteur MCP : sans objet.*
 
-- [~] **INC-371 — `verify-workflows.sh` redemande ses jetons après sa reconstruction ; contrôle de sources `jetons-harnais.test.ts`** : rouge avant, vert après ; `verify-workflows.sh` rejoué entier sous verrou.
+- [x] **INC-371 — `verify-workflows.sh` redemande ses jetons après sa reconstruction ; contrôle de sources `jetons-harnais.test.ts`** : rouge avant, vert après ; `verify-workflows.sh` rejoué entier sous verrou.
 
 ## Correctif — INC-372 (2026-11-26, URGENT, bloque la livraison)
 
@@ -21166,3 +21166,9 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 - [@] **Fiches du lot** : INC-310 (fiche mère), INC-235, INC-232, INC-225, INC-305, INC-300, INC-284, INC-287, INC-224, INC-236, INC-227, INC-219, INC-237.
   *Prise en charge : session interactive 4891a451 (p2enjoy-crm-7a) depuis 2026-11-26 05:17 UTC — état avant : [ ] ; confiée par la session de livraison (11)*
+
+## Correctif — INC-373 (2026-11-26, demandé par la session de livraison)
+
+*`verify-workflows.sh` : comptage de triggers périmé ; suites entières sous verrou (62 min). Spécification : `docs/SPEC-test-harness.md` §3.17 ; fiche INC-373. Connecteur MCP : sans objet.*
+
+- [ ] **INC-373 — `verify-workflows.sh` nomme les quatre triggers du catalogue et ne rejoue que les specs de son unité** (`--suites-completes` pour l'entier) ; preuve : contrôle de sources étendu, harnais rejoué entier sous verrou.

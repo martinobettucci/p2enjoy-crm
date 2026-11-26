@@ -122,7 +122,7 @@ if docker image inspect node:24-alpine >/dev/null 2>&1; then
 	[ "$code" = 0 ] && ok "dans node:24-alpine (l'image de la livraison, sans bash), le script prebuild passe : la garde est une affaire du poste" \
 		|| fail "le script prebuild casse le build dans node:24-alpine (code $code) : « $(printf '%s' "$sortie" | head -2 | tr '\n' ' ') »"
 else
-	fail "l'image node:24-alpine est absente : docker pull node:24-alpine, puis rejouer (la preuve INC-372 ne peut pas être jouée)"
+	fail "l'image node:24-alpine est absente : la tirer sur le poste, puis rejouer (la preuve INC-372 ne peut pas être jouée)"
 fi
 
 titre "4. Le jeton traverse"
