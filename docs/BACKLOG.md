@@ -21141,4 +21141,4 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 - [x] **INC-369 — le rejeu final de `verify-board.sh` montre la cause de son rouge** ; harnais rejoué entier sous verrou, branche d'échec prouvée sur un journal factice.
 
-- [ ] **INC-370 — `verify-colonnes-protegees.sh` rend 401 au lieu de 403 après sa seconde reconstruction** (fiche INC-370) : rejouer, consigner le corps de la réponse, corriger la cause.
+- [~] **INC-370 — `verify-colonnes-protegees.sh` rend 401 « JWT expired » au lieu de 403 après sa seconde reconstruction** (fiche INC-370) : cause établie (jeton interne de 300 s), correction posée (jetons redemandés après chaque reconstruction) ; reste le rejeu entier vert sous verrou.

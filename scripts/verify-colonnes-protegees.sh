@@ -452,7 +452,12 @@ titre "4. La migration est rejouable, et CONVERGENTE"
 # que la 134 a retirées de `cards` (`position`, `owner_id`…) ; elles ne se rejouent plus sur une base à jour. Le rejeu
 # est celui du répertoire entier, dans l'ordre, par la RECONSTRUCTION : c'est elle qui doit refermer la porte.
 rejouer_14() {
-	reconstruire_base_dev > "$P2ENJOY_TMP/p2enjoy-colonnes-rejeu.log" 2>&1
+	reconstruire_base_dev > "$P2ENJOY_TMP/p2enjoy-colonnes-rejeu.log" 2>&1 || return 1
+	# INC-370 : le jeton interne d'un script vaut 300 s au plus (`scripts/lib/sso.sh`, CRM-092) ; une reconstruction dure plus longtemps. Les
+	# jetons de la section 3 sont REDEMANDÉS après chaque reconstruction, sans quoi l'écriture suivante rend 401 « JWT expired » au lieu de 403.
+	T_ADMIN=$(jeton_de "$MAIL_ADMIN")
+	T_BIZDEV=$(jeton_de "$MAIL_BIZDEV")
+	T_VIEWER=$(jeton_de "$MAIL_VIEWER")
 }
 if rejouer_14; then
 	ok "le répertoire se rejoue sans erreur, la 14 et la 112 à leur rang"
@@ -484,7 +489,7 @@ rejouer_14 || true
 code=$(patch_adresse "$T_ADMIN" 'c-00000000')
 [ "$code" = "403" ] \
 	&& ok "…et l'écriture est de nouveau REFUSÉE : la restauration est CONSTATÉE, pas supposée" \
-	|| fail "après restauration, l'écriture rend encore $code"
+	|| fail "après restauration, l'écriture rend encore $code — corps : $(head -c 300 "$CORPS" 2>/dev/null | tr '\n' ' ') (INC-370)"
 
 titre "5. Le RÉPERTOIRE fait l'état : la reconstruction referme ce qu'une écriture à la main a rouvert"
 
