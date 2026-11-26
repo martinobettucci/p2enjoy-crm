@@ -2133,12 +2133,17 @@ Une migration ordinaire, **un seul fichier, une seule transaction**, au prochain
    dans la même transaction ; la migration compare ensuite le nombre de lignes avant et après (égal) et ne laisse
    passer aucun ancien code. C'est la **seule** écriture permise sur le journal, un renommage de libellé sans changement
    de ligne ; elle est consignée au journal de la décision et au contrat de déploiement.
+   **Les déclencheurs d'ajout seul portent le NOM de la colonne de date en argument** (`app.journal_refuse_change('cree_le', '')`, `0115`) : ils sont **reposés** avec leurs
+   noms nouveaux (`mcp_calls_refuse_change`, `mcp_calls_refuse_truncate`) et l'argument `created_at` ; sans cela, l'exception de la purge d'un an lirait une colonne
+   qui n'existe plus et le journal ne s'effacerait plus. **Le journal de la plateforme n'est pas touché** : le geste `mcp_droits_poses` et le détail des gestes déjà écrits
+   (les paires famille/action d'avant et d'après, que l'écran ne fait que compter) gardent leurs mots anciens — lot 2.
 4. **Reposer les trois contraintes** `check` avec les valeurs nouvelles (liste fermée, §6.1), dans la même transaction que la
    conversion : aucun instant où une valeur ancienne ou nouvelle manque de contrainte.
 5. **Remplacer les huit fonctions** : `drop function` de l'ancien nom puis `create function` du nouveau (un paramètre ou une
    colonne de retour ne se renomme pas par `create or replace`), mêmes propriétaire (`postgres`), `security definer`,
    `search_path` vide, privilèges (`revoke … from public, anon, authenticated` puis `grant` au rôle voulu).
-6. **Reprendre toute fonction ou vue dont le corps cite un ancien nom** : le relevé se fait au catalogue,
+6. **Reprendre toute fonction ou vue dont le corps cite un ancien nom** (relevé au catalogue de la base de développement le 2026-11-26 : `public.plateforme_utilisateurs`,
+   `app.purge_audit_logs`, et les huit fonctions du registre ; aucune vue) : le relevé se fait au catalogue,
    `pg_proc.prosrc ~ '\m(mcp_comptes|mcp_droits|mcp_journal|mcp_autorise|mcp_compte|…)\M'`, avant d'écrire la
    migration ; une référence par nom n'est pas suivie par `alter … rename`, elle casserait à l'exécution.
 7. **Commentaires** (`comment on`) des tables, citant `INC-286` et cette section.
