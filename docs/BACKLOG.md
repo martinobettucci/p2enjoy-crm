@@ -21172,3 +21172,10 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 *`verify-workflows.sh` : comptage de triggers périmé ; suites entières sous verrou (62 min). Spécification : `docs/SPEC-test-harness.md` §3.17 ; fiche INC-373. Connecteur MCP : sans objet.*
 
 - [ ] **INC-373 — `verify-workflows.sh` nomme les quatre triggers du catalogue et ne rejoue que les specs de son unité** (`--suites-completes` pour l'entier) ; preuve : contrôle de sources étendu, harnais rejoué entier sous verrou.
+
+## Diagnostic — la famille Kong → fonctions : INC-311 et INC-292 (demandé par la session de livraison, 2026-11-26)
+
+*Diagnostic seul : établir pourquoi le runtime des fonctions avorte la connexion (`connection aborted`) et rendre le constat, les remèdes et leurs compromis, sans modifier le produit ni l'infrastructure. Fiches INC-311, INC-292 ; décision 686. Connecteur MCP : sans objet.*
+
+- [@] **Diagnostic INC-311 / INC-292** : constat horodaté (journaux Kong et fonctions), reproduction déterministe sur `functions:9000` puis par Kong, remèdes avec compromis, effet sur la production.
+  *Prise en charge : session interactive 4891a451 (p2enjoy-crm-7a) depuis 2026-11-26 07:14 UTC — état avant : [ ] ; confiée par la session de livraison (11)*
