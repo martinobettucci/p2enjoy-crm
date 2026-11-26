@@ -20471,7 +20471,7 @@ campagne complète revient à la session de livraison (décision 830).
 - [P] **Livraison et constat** : `docs/PROD_MIGRATIONS.md` §2.66, soit la migration 194, la webapp, l'image `mcp` et le
   manuel. Il reste le constat du responsable dans « Seulement moi ».
 
-### CRM-161 — L'espace courant cloisonne les tracks, les channels et l'inbox ; tout le reste est global, l'espace de provenance affiché `[@]`
+### CRM-161 — L'espace courant cloisonne les tracks, les channels et l'inbox ; tout le reste est global, l'espace de provenance affiché `[P]`
 
 **T1 et T2 livrées le 2026-11-21** (décision 977, révision `377ac6e5`) ; T3 à T5 restent à faire ; reste le constat du responsable.
 **Les deux relevés de T3.a livrés le 2026-11-24** (`ef535024`, `d8cc8323` ; décision 984, révision `4d836b4e`).
@@ -20479,8 +20479,7 @@ campagne complète revient à la session de livraison (décision 830).
 **T3.b livrée le 2026-11-24, tard** (Rentabilité, Coûts, Ma journée, le carnet, les objectifs, la cloche, la recherche ; le formulaire d'un contact borné à son espace ; décision 988, révision `ff2804ee`).
 **T3.c livrée le 2026-11-25 au soir** (les migrations 201 et 202, l'onglet Organisations et Temps ▸ Rapport de tous les espaces ; décision 993, révision `e550be2d`).
 **T3.d à T5 livrées le 2026-11-26 au matin** (la migration 203, le plafond journalier tous espaces ; le Pilotage, la saisie et le rapport de temps de tous les espaces ; le connecteur ; le manuel ; décision 1003, révision `66a7bb3a`) ; reste le constat du responsable.
-*Prise en charge : session interactive 4891a451 (p2enjoy-crm-ef, ex-5f) depuis 2026-11-24 06:41 UTC — état avant : [~] ; T3 à T5,
-confiées par la session de livraison (96)*
+**Il ne reste que le constat du responsable en production** : T1 à T5 sont livrées et vérifiées en développement ; le geste de production de la migration `0206` et des suivantes est au contrat de déploiement (`docs/PROD_MIGRATIONS.md`, §2.81 à §2.86, historique). Prise en charge libérée à la clôture (2026-11-26).
 
 **Origine** : demande du responsable, le 2026-11-21 ; arbitrée le même jour (décision 963).
 **Demande, verbatim** : « le inbox ne semble pas être contenu au workspace. en fait tout est contenu au workspace. d'ailleurs on
