@@ -482,6 +482,10 @@ la valeur du contrat, avant Docker (`runDev.sh`) et avant toute destruction (`re
 *Écrite le 2026-11-26, avant le code.* **Mesuré** : `npm run build` dans `node:24-alpine` (image de la livraison, `scripts/spark/livrer.sh`) échoue sur la garde `prebuild` d'INC-177 : pas de bash.
 **La règle.** La garde de `npm run build` (§3.9, seconde forme) protège le `webapp/dist` servi par une campagne ; elle ne vaut que sur le poste. Le script `prebuild` la lance **seulement si `bash` existe** ; sans bash, le build passe sans garde. **Preuve** : `scripts/verify-campagne.sh` joue `npm run prebuild` dans `node:24-alpine` (code 0, sans bash) et prouve que, sur le poste, la garde refuse toujours un build pendant qu'un aperçu est servi sous campagne. Connecteur MCP : sans objet.
 
+### 3.20 Lot G — des harnais qui disent ce qu'ils comptent — INC-355, INC-339, INC-298, INC-312
+
+*Écrite le 2026-11-26, avant le code.* **Règles** : (a) un contrôle qui borne une **liste** (les politiques de `storage.objects`, les triggers d'un catalogue, les workflows globaux d'un seed) **nomme** les éléments plutôt que de les compter, chacun avec la raison de sa présence ; un compte nu devient faux au premier ajout légitime d'une autre unité. (b) Un contrôle de politique de stockage exige de **chaque** politique qu'elle cite son bucket (§18.5 de `docs/SPEC-mail-subsystem.md` : une politique trop large ouvrirait tout le stockage). (c) Le seed qui attend le worker d'envoi attend **au-delà du premier délai de reprise** (60 s, `mail-sync/src/mail_sync/backoff.py`) et **cite** l'état de l'envoi à son échec. (d) Le contrôle des jetons (`jetons-harnais.test.ts`, §3.18) compte comme opération longue l'**appel** d'une fonction dont le corps reconstruit sans redemander ses jetons ensuite. (e) Une cause intermittente se prouve par le **nombre de passages** consigné (reconstructions enchaînées), non par un passage vert. Connecteur MCP : sans objet.
+
 ## 4. Projets Playwright
 
 ### 4.1 Une seule configuration
