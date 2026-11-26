@@ -42,6 +42,8 @@
 //       « creer-des-contacts » (section 12.2), « expediteurs-bloques » (section 12.7), et « transfert-de-mail » du
 //       chapitre 5 (section 5.2), sur les données du §49 du seed ; chaque geste est ouvert puis annulé, rien n'est écrit
 //       (docs/DESIGN_SYSTEM.md §5.109, §5.109 bis ; docs/SPEC-mail-subsystem.md §32.13 ; docs/SPEC-seed.md §49)
+// @spec CRM-166 (docs/BACKLOG.md) — tranche T3 : l'image « assistant-ia » de la section 12.2 — la bulle et le plan proposé, rien n'est appliqué
+//       (docs/DESIGN_SYSTEM.md §5.116 ; docs/SPEC-mail-subsystem.md §36 ; docs/SPEC-ia.md §17)
 // @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : l'image « piece-non-analysee » de la section 12.1 — « Télécharger quand
 //       même » et son avertissement (docs/DESIGN_SYSTEM.md §5.95 ; docs/SPEC-pieces-jointes.md §17.4)
 //
@@ -717,6 +719,39 @@ test('les actions groupées, le filtre par expéditeur, le transfert, le blocage
 		nom: 'expediteurs-bloques',
 		cibles: [ecran.getByTestId('ligne-expediteur-bloque').first()],
 	})
+})
+
+// `CRM-166` T3 : l'assistant de l'inbox — la bulle et le plan proposé, sur la conversation « Candidature spontanée » du seed. Le serveur du modèle n'est jamais
+// appelé : l'en-tête du simulateur local choisit le scénario (docs/SPEC-ia.md §11.6, §17.9). RIEN N'EST APPLIQUÉ : le plan est montré, puis le panneau est fermé.
+test("l'assistant IA de l'inbox : la bulle, la demande et le plan proposé (CRM-166)", async ({ page, request }) => {
+	await page.route('**/functions/v1/ia/**', (route) => route.continue({ headers: { ...route.request().headers(), 'x-ia-simulateur': 'inbox' } }))
+	const [nora] = await lireService<{ id: string }[]>(
+		request,
+		`mail_messages?select=id&rfc822_message_id=eq.${encodeURIComponent('<seed-inbox-inconnu@atelier-lumen.example>')}`,
+	)
+	// Le panneau et son plan tiennent dans la fenêtre : « Tout accepter », en pied, paraît sur l'image.
+	await page.setViewportSize({ width: 1440, height: 1200 })
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(`/p2enjoy/inbox?courrier=tous&message=${nora!.id}`)
+	await expect(page.getByTestId('inbox-message-ouvert')).toContainText('Nora Nouveau')
+	await liste(page)
+		.locator('li')
+		.filter({ has: page.getByTestId('inbox-message').filter({ hasText: 'Candidature spontanée' }) })
+		.getByTestId('inbox-case-fil')
+		.check()
+	await page.getByTestId('assistant-bulle').click()
+	await page.getByTestId('assistant-demande').fill('Marque lu et supprime partout')
+	await page.getByTestId('assistant-envoyer').click()
+	await expect(page.getByTestId('assistant-fil')).toHaveCount(1)
+	await expect(page.getByTestId('assistant-fil')).toContainText('irréversible')
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: LIRE,
+		nom: 'assistant-ia',
+		cibles: [page.getByTestId('assistant-panneau'), page.getByTestId('assistant-bulle')],
+	})
+	await page.keyboard.press('Escape')
+	await expect(page.getByTestId('assistant-panneau')).toHaveCount(0)
 })
 
 test('le transfert reçu, dans la cloche de Driss (CRM-156)', async ({ page }) => {

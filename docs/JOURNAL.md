@@ -42774,3 +42774,13 @@ session sans son accord.
 ### `INC-142` c — fermeture
 
 *2026-11-26, session `p2enjoy-crm-dd`.* `remettre` de `move-card.spec.ts` retire par la clé de service les points d'étape que les déplacements ont fait naître (créés depuis le chargement du fichier). **Vérifié** : base remise d'abord à l'état d'avant, puis `autour` : 26 passés, aucun résidu ; `tsc -p tsconfig.json` sans erreur.
+
+### décision 1006 — `CRM-166` T2 et T3 : l'écran de l'assistant de l'inbox, le manuel et le contrat
+
+*2026-11-26, session d5b44a2d (p2enjoy-crm-30), sur l'ordre de la session de livraison (11) : T1+T2 n'entrent pas en production sans T3 (`CLAUDE.md` §7).*
+**Observations, à l'écriture du code et à la lecture des captures.** (1) La liste n'est pas lue par l'assistant : « tout le filtre » se lit **à l'envoi**, pas à l'ouverture. (2) `onTermine` de la page vide la sélection : l'assistant
+reçoit son propre rappel, qui relit sans vider (§36.9, révisé). (3) Le focus se perdait à la fin d'une demande (le bouton « Annuler » qui le portait disparaît) : il va à la première ligne du plan (§5.116, révisé). (4) Le verbe « Accepter »,
+seul, est cité par deux sections du manuel du workflow pour un autre bouton : il aurait fait citer deux fois un élément non montré (contrôle 9 de `verify-manual.sh`) — les libellés visibles sont « Accepter le plan » et « Refuser le plan ».
+(5) Les tests de `RouteInbox` et `InboxSuggestion` simulaient `../lib/supabase` sans `urlApiCrm` : complétés. (6) Le rouge avant de la concurrence est rejoué : sans la voie `_ia-inbox`, `GET /ia/etat` attend la fin du plan (7,9 s).
+**Décisions.** La bulle n'est rendue que sur la liste des messages, quand un dossier est choisi ; la capacité d'administrer n'est pas passée (la base refuse, l'écran le dit) ; le contrat §2.87 ne porte **aucune variable** — le plan emploie le serveur de
+modèle déjà en production — et demande au responsable le constat d'un plan sur le vrai modèle. **Vérifications** : Vitest 21/21, unitaires 6564/6564, E2E `assistant-inbox` 10/10, API `ia-inbox` 8/8, manuel 170 contrôles, captures observées.

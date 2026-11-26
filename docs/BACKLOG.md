@@ -20994,8 +20994,8 @@ corriger sans arbitrage l'est par lots cohérents, preuve rouge avant et verte a
   `notifications`, `preferences-notifications` et `mentions-composeur` verts (les comptes de Driss à 2 et 3 sont intacts) ; manuel `05-notifications` 5/5. Sous-ensemble du périmètre, pas une campagne complète.
   **Reste, pour le responsable en production** : le geste de la `0206` (contrat `docs/PROD_MIGRATIONS.md` §2.85), puis le constat que le résumé du matin cite une mention d'organisation non lue.
 
-### CRM-166 — Un assistant IA dans l'inbox : il propose un plan d'actions sur les mails sélectionnés, que l'on accepte ou refuse mail par mail `[@]`
-*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-25 00:53 UTC — état avant : [ ] ; confiée par la session de livraison (11), décision 994*
+### CRM-166 — Un assistant IA dans l'inbox : il propose un plan d'actions sur les mails sélectionnés, que l'on accepte ou refuse mail par mail `[P]`
+*Prise de d5b44a2d (p2enjoy-crm-30) libérée le 2026-11-26 : T1, T2 et T3 faites et vérifiées en développement (sous-ensembles du périmètre ; la campagne complète est celle de la session de livraison). Reste, pour le responsable en production : le geste du contrat §2.87 (migration `0207`, recréation de `functions`, webapp), puis le constat d'un plan sur le vrai modèle.*
 
 **Origine** : demande du responsable, le 2026-11-25 ; arbitrée le même jour (décision 994).
 **Demande, verbatim** : « je veux aussi ajouter un assistant IA (genre une bulle en bas à droite) disponible uniquement en inbox.
@@ -21027,10 +21027,11 @@ la voie `_ia-inbox` — CRM-163 —, le simulateur), `docs/SPEC-mail-subsystem.m
 **Tranches** :
 - [x] **T1 — la fonction** : `POST /ia/inbox/plan`, la voie `_ia-inbox` et son routage dans `main`, les trois fonctions de lecture (migration `0207`,
   `database.types.ts` régénéré), le simulateur (`inbox`, `inbox_lent`, `inbox_invalide`) ; unitaires, pgTAP, API (dont la concurrence) ;
-  **faite et vérifiée en développement le 2026-11-26** : unitaires `supabase/functions` 420/420 (routeur et voies 25/25), pgTAP `0192` 16/16, API `e2e/api/ia-inbox.spec.ts` 7/7 sur la base à 204 migrations, `functions` et `ollama-simule` recréés, typecheck propre. **Non rejoué** : la preuve rouge-avant de la concurrence (voie absente) ; le test passe avec la voie. Sous-ensemble du périmètre, pas une campagne complète.
+  **faite et vérifiée en développement le 2026-11-26** : unitaires `supabase/functions` 420/420 (routeur et voies 25/25), pgTAP `0192` 16/16, API `e2e/api/ia-inbox.spec.ts` 7/7 sur la base à 204 migrations, `functions` et `ollama-simule` recréés, typecheck propre. **Rouge avant rejoué le 2026-11-26** : le routage de `main` redirigé vers le répertoire `ia` (sans la voie `_ia-inbox`), le test de concurrence échoue — `GET /ia/etat` attend la fin du plan, 7,9 s —, puis vert (≈ 1 s) la voie rétablie ; le routeur est restauré et `functions` recréé. Sous-ensemble du périmètre, pas une campagne complète.
 - [ ] **T2 — l'écran** : la lib du plan, la bulle et son panneau dans `RouteInbox`, l'acceptation par les gestes de la page, « Tout accepter » ;
   Vitest, E2E souris et clavier contre le simulateur, captures observées ; **le responsable confirme la lecture ciblée du design system avant le code** ;
-- [ ] **T3 — le manuel, le contrat, le seed** : le chapitre de l'inbox, `docs/PROD_MIGRATIONS.md`, le changelog ; l'unité passe `[P]`.
+- [x] **T3 — le manuel, le contrat, le seed** : le chapitre de l'inbox, `docs/PROD_MIGRATIONS.md`, le changelog ; l'unité passe `[P]`.
+  **Faite le 2026-11-26** : manuel §12.2 (« Demander un plan à l'assistant IA », deux paragraphes et l'image `assistant-ia`, scénario `e2e/manuel/12-inbox.spec.ts`), manuel construit 34 chapitres 0 avertissement, `verify-manual.sh` 170 contrôles sans anomalie ; captures versionnées `docs/captures/CRM-166/` (14, observées) ; contrat §2.87 complet (migration, `functions`, webapp, constats) ; changelog ; API `ia-inbox` 8/8 dont le refus par la base d'une action sur un fil que la personne ne voit pas. Seed : aucun mail ajouté, les fils du jeu suffisent (§36.8).
 **DoD** : Vitest (le contrôle de la sortie, chaque action) ; API (la route, le refus d'une action que la personne ne peut pas
 faire, par requête directe) ; E2E souris et clavier (demander, lire le plan, accepter, refuser, tout accepter, état dégradé) contre
 le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne complète revient à la session de livraison (décision 830).

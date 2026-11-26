@@ -9354,6 +9354,7 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
 - **Le focus n'est jamais perdu.** La demande finie, le bouton « Annuler la demande » qui le portait disparaît : le focus va à **la première ligne du plan** (`li` focalisable,
   d'où `Tab` atteint « Accepter »), à défaut au champ. Après « Accepter » ou « Refuser », le focus revient à la ligne si le bouton qui le portait a quitté la page. La
   confirmation de « Tout accepter » reçoit le focus sur « Annuler » (§5.13), ce qui la rend visible quand le panneau défile.
+- **Les libellés visibles des deux gestes sont « Accepter le plan » et « Refuser le plan »** (et non « Accepter » seul : ce mot, cité par le manuel du workflow pour un autre bouton, ferait citer deux fois un élément que le manuel ne montre pas) ; leur nom accessible garde le fil (« Accepter le plan pour Facture mars »).
 - **Une action faite, refusée ou déclinée se lit sur sa pilule** (« · faite », « · refusée », « · déclinée »), en plus de l'état du fil.
 - **Le panneau défile à l'intérieur** (`max-h-[80vh]`) ; les lignes ne sont jamais coupées par la page. Il tient dans la fenêtre aux quatre paliers (mesuré : bords droit,
   gauche et haut dans la fenêtre, aucun défilement horizontal de la page) ; sous `lg`, la bulle reste à 16 px du bord et le panneau couvre la liste, qu'on retrouve en le fermant.

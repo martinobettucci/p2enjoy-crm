@@ -91,6 +91,25 @@ test.describe('POST /ia/inbox/plan', () => {
 		expect(flux.at(-1)).toEqual({ issue: 'plan', plans: [], rejetees: 0, ecartes: 1 })
 	})
 
+	test('une action sur un fil que la personne ne voit pas est refusée par la base, sur sa propre requête — la lectrice ne touche pas le fil de Driss', async ({ request }) => {
+		// L'écran applique chaque action par `inbox_bulk_apply` (docs/SPEC-mail-subsystem.md §36.3) : la base calcule la portée parmi ce que la personne voit.
+		const driss = await jetonDe('bizdev@p2enjoy.test')
+		const fils = await filsDeLaPersonne(request, driss, 1)
+		const lectrice = await jetonDe('viewer@p2enjoy.test')
+		for (const [action, argument] of [['mark_read', {}], ['delete', { also_mailbox: true }]] as const) {
+			const reponse = await request.post(`${URL_API}/rest/v1/rpc/inbox_bulk_apply`, {
+				headers: json(enTetesAuthentifies(lectrice)),
+				data: { p_scope: portee(fils), p_action: action, p_argument: argument },
+			})
+			expect(reponse.status(), await reponse.text()).toBe(200)
+			const paquet = (await reponse.json()) as { threads?: number; messages?: number; done?: number }
+			expect(paquet.done ?? 0, `« ${action} » ne fait rien sur le fil de Driss`).toBe(0)
+			expect(paquet.messages ?? 0, `« ${action} » ne touche aucun message qu'elle ne voit pas`).toBe(0)
+		}
+		// Driss voit toujours son fil : rien n'a été supprimé.
+		expect((await filsDeLaPersonne(request, driss, 1)).length).toBe(1)
+	})
+
 	test('un espace qui n’est pas le sien : 403 ; sans jeton : 401', async ({ request }) => {
 		const jeton = await jetonDe('bizdev@p2enjoy.test')
 		const fils = await filsDeLaPersonne(request, jeton, 1)

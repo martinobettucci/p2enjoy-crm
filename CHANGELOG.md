@@ -19,6 +19,10 @@ d'exécuter le code attendu.
 - **`CRM-166` T1 — la fonction de l'assistant de l'inbox** (décisions 994 et 997). `POST /ia/inbox/plan` lit, avec le jeton de la personne, des fils choisis (cinq au plus par lot), les envoie au modèle avec
   la demande écrite, les pastilles, les affaires et les membres de l'espace, contrôle la sortie — une clé, un fil ou une action inconnus sont rejetés et comptés — et rend un plan, sans rien écrire
   dans la messagerie. Voie `_ia-inbox` : le plan ne bloque ni l'assistant de conception ni la passe des pastilles. Trois fonctions de lecture en base. L'écran suit (T2). Contrat §2.87.
+- **`CRM-166` T2 et T3 — l'assistant IA de l'inbox, son écran et son manuel** (décisions 994, 997 et 1006). Une bulle « Assistant IA » en bas à droite de la liste des messages ouvre un panneau qui ne bloque pas la page : on y écrit une demande pour les
+  fils cochés (ou tout le filtre, 50 au plus), le plan arrive lot après lot (cinq fils par lot, progression, annulation), chaque fil s'accepte ou se refuse (« Accepter le plan », « Refuser le plan »), « Tout accepter » applique ce qui n'a pas de confirmation.
+  Chaque action passe par le geste de la page ; supprimer partout et bloquer l'expéditeur gardent leurs confirmations. L'état sans IA est dit. Aucun droit nouveau, aucune variable : le plan emploie le serveur de modèle de l'assistant de conception.
+  Le manuel (chapitre 12, « Demander un plan à l'assistant IA ») et ses images suivent. Contrat §2.87.
 
 ## [Publié]
 

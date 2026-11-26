@@ -3778,6 +3778,33 @@ pourquoi ; c'est le même chemin que l'import du carnet. Si tous les expéditeur
 
 ![La liste à vérifier : l'expéditrice inconnue cochée, son nom et l'organisation tirée de son domaine, puis « Créer 1 contact »](manuel/images/l-inbox-lire-trier-et-repondre/creer-des-contacts.jpg)
 
+**Demander un plan à l'assistant IA.** Sur la liste des messages, une bulle ronde, « **Assistant IA** », est posée en bas à
+droite de la page. Cochez des conversations — jusqu'à 50 — ou, sous un filtre, « **Tout sélectionner** » ; ouvrez la bulle :
+un panneau s'ouvre **sans bloquer la page**, on peut continuer de cocher et de lire derrière lui. Écrivez ce que vous voulez
+en une phrase libre, 1 000 caractères au plus — « Marque lu et supprime partout », par exemple —, puis « **Proposer un
+plan** » (ou Ctrl + Entrée). L'assistant lit **l'objet, l'expéditeur, la date et le début du texte** de chaque conversation
+cochée — jamais les pièces jointes — et propose, **conversation par conversation**, des actions : poser ou retirer une
+pastille, classer dans une affaire ou en retirer, marquer lu ou non lu, mettre en sommeil, transférer à un membre, supprimer,
+bloquer l'expéditeur. Le plan arrive **par lots de cinq conversations** : le panneau dit où il en est, et un bouton coupe la
+demande. Chaque action porte son **motif**.
+
+![L'assistant IA : la bulle, le panneau avec la demande écrite, « Proposer un plan », le plan d'une conversation avec ses actions et leurs motifs, « Accepter le plan », « Refuser le plan » et « Tout accepter »](manuel/images/l-inbox-lire-trier-et-repondre/assistant-ia.jpg)
+
+**Rien ne se fait sans vous.** Le plan se lit, puis s'accepte ou se refuse **conversation par conversation** : « **Accepter le plan** »
+applique toutes ses actions, dans l'ordre du plan ; « **Refuser le plan** » la laisse telle quelle. On ne modifie pas une action : on
+refuse, ou on refait une demande, qui **remplace** le plan. Chaque action passe par le **même geste que sur la page**, avec
+vos droits : ce que votre rôle ne permet pas est refusé par le CRM et dit sur la ligne de la conversation, qu'on peut
+réessayer. Une action **irréversible** — supprimer partout, bloquer l'expéditeur — porte ce mot et demande **sa propre
+confirmation**, la même que sur la page, sous la ligne. Refuser cette confirmation laisse les autres actions faites.
+« **Tout accepter** » demande d'abord confirmation, en disant le nombre d'actions et de conversations, et n'applique que les
+actions **sans** confirmation : les irréversibles restent proposées, à valider une à une. Après chaque action appliquée, la
+liste se met à jour — une conversation classée ou supprimée la quitte —, et sa ligne reste dans le plan, marquée comme faite.
+
+Le plan n'est **conservé nulle part** : le fermer, recharger la page ou changer de dossier le fait disparaître. Sans
+assistant — non configuré, ou son serveur ne répond pas —, le panneau en dit la raison et ne propose rien : les gestes de la page
+restent entiers. Au clavier, la bulle s'ouvre à Entrée ou à l'Espace, le curseur entre sur la demande, Échap referme le
+panneau et rend la main à la bulle, et Tab parcourt les lignes du plan.
+
 Tout cela se fait au clavier : la case se coche à l'Espace, le menu se parcourt aux flèches, et chaque confirmation rend
 la main à ce qui l'a ouverte.
 

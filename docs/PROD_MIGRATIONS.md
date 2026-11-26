@@ -1823,19 +1823,28 @@ reçoit son résumé. *Écrite et prouvée en développement le 2026-11-25 (7a) 
 le garde ne s'exerce que sur un fichier à appliquer. **Effet en production : nul** — les onze fichiers sont inscrits, aucun fichier du dépôt (204) n'est refusé, et le garde ne change rien à un passage sans fichier nouveau. **Il refusera, à la fenêtre où il paraîtrait, une migration future qui porterait sa propre transaction** : le refus nomme le fichier, et la correction est de retirer l'instruction (le runner enveloppe déjà chaque fichier).
 **Vérification** (`scripts/verify-migrations.sh --runner-seul`, 9 contrôles, sans base) : un nouveau fichier avec `begin;` / `commit;` est refusé et rien n'est appliqué ; chacune des formes (`rollback;`, `start transaction;`, majuscules, retraits) l'est ; un bloc PL/pgSQL n'est pas pris ; `0034` et `0116`, de la liste, passent ; le contenu de `0034` sous un autre nom est refusé ; les 204 migrations du dépôt passent. Rejoué aussi sous l'interpréteur réel du runner (`postgres:17-alpine`, busybox). **Retour arrière** : redéposer l'ancien script.
 
-### 2.87 `CRM-166` T1, décisions 994 et 997 — le plan de l'assistant de l'inbox : la fonction et ses trois lectures (EN ATTENTE)
+### 2.87 `CRM-166`, décisions 994 et 997 — l'assistant IA de l'inbox : la bulle, le plan et sa fonction (EN ATTENTE)
 
-`docs/SPEC-ia.md` §17 ; `docs/SCHEMA.md` « Migration `0207` ». La migration `0207` (trois fonctions de **lecture**, aucune table), la voie `supabase/functions/_ia-inbox/`, la route `POST /ia/inbox/plan`
-de la fonction `ia` et le routage de `main`. **Aucune variable, aucun secret** : le plan emploie le serveur de l'assistant de conception (`OLLAMA_*`). Rien n'est visible tant que
-T2 (l'écran) n'est pas livrée.
+`docs/SPEC-ia.md` §17 ; `docs/SPEC-mail-subsystem.md` §36 ; `docs/DESIGN_SYSTEM.md` §5.116 ; `docs/SCHEMA.md` « Migration `0207` » ; manuel §12.2. Trois morceaux, **livrés ensemble** :
+la migration `0207` (trois fonctions de **lecture**, aucune table), la fonction `ia` — la voie `supabase/functions/_ia-inbox/`, la route `POST /ia/inbox/plan`, le routage de `main` — et la webapp (la bulle « Assistant IA »
+de la liste des messages). Le manuel (`docs/manual.md`, chapitre 12) et ses images sont livrés avec la webapp.
+
+**Aucune variable, aucun secret, aucun geste du responsable avant la fenêtre.** Le plan appelle **le même serveur de modèle que l'assistant de conception et la passe des pastilles** (`OLLAMA_HOST`, `OLLAMA_MODEL`,
+`OLLAMA_API_KEY`, `OLLAMA_CONTEXT_LENGTH`) : ils sont déjà posés en production (clé remplacée le 2026-11-20, passe des pastilles constatée sur le vrai modèle, §1). Sans eux, la bulle dit « indisponible » et
+ne propose rien. **La seule chose qu'aucune preuve de développement ne couvre** : la qualité et la durée d'un plan sur le **vrai** modèle (le développement emploie le simulateur local, qui calcule le plan de la demande) —
+d'où le constat du responsable ci-dessous.
 
 | # | Geste | Qui | Comment |
 |---|---|---|---|
 | 1 | Appliquer la migration `0207` | session de livraison, sur instruction du responsable | le runner, comme toute migration (§4) ; un `pg_dump` avant |
-| 2 | Recréer la fonction `functions` | session de livraison | `compose_prod up -d --no-deps --force-recreate --wait functions` : `main` et le répertoire `_ia-inbox` sont lus au démarrage |
-| 3 | Constater | la session de livraison | `GET /functions/v1/ia/etat` rend `200` ; un plan d'un fil rend un flux NDJSON ; aucune ligne `plan_inbox_*` ne porte de texte |
+| 2 | Recréer la fonction `functions` | session de livraison | `compose_prod up -d --no-deps --force-recreate --wait functions` : `main` et le répertoire `_ia-inbox` sont lus au démarrage ; sans ce geste, la route n'existe pas et la bulle dit « n'a pas pu être lu » |
+| 3 | Livrer la webapp | session de livraison, dans la fenêtre du lot | comme toute livraison de la webapp (§4) |
+| 4 | Constater (technique) | la session de livraison | `GET /functions/v1/ia/etat` rend `200` ; `POST /functions/v1/ia/inbox/plan` avec un fil du responsable rend un flux NDJSON, 202 ; aucune ligne `plan_inbox_*` du journal ne porte de texte de mail |
+| 5 | Constater (usage) | le responsable | dans l'inbox, cocher deux conversations, ouvrir la bulle, écrire « Marque lu » : un plan arrive en quelques dizaines de secondes, « Accepter le plan » applique, la conversation quitte ou change dans la liste ; une demande qui dépasse 90 s dit « l'assistant a mis trop de temps à répondre » et se réessaie |
 
-**Retour arrière** : supprimer les trois fonctions (`SCHEMA.md`) et revenir à la fonction `functions` de la révision d'avant.
+**Ce qui devient visible** : la bulle ronde en bas à droite de la liste des messages, pour tout membre qui voit l'inbox ; elle n'ajoute **aucun droit** — chaque action passe par le geste de la page, que la base refuse à qui n'a pas le droit.
+**Retour arrière** : la webapp et la fonction `functions` de la révision d'avant ; supprimer les trois fonctions de la migration (`docs/SCHEMA.md`) — aucune donnée n'est écrite par l'assistant.
+**Risque connu** : un plan sur de gros fils peut approcher la borne de 90 s par lot de cinq conversations ; la demande se coupe alors proprement (message, « Réessayer »).
 
 ## 3. Migrations en attente
 

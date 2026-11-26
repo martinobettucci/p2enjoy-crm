@@ -3624,6 +3624,292 @@
 			"type": "paragraph",
 			"content": [
 				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Demander un plan à l'assistant IA."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sur la liste des messages, une bulle ronde, « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Assistant IA"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », est posée en bas à\ndroite de la page. Cochez des conversations — jusqu'à 50 — ou, sous un filtre, « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Tout sélectionner"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » ; ouvrez la bulle :\nun panneau s'ouvre "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sans bloquer la page"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", on peut continuer de cocher et de lire derrière lui. Écrivez ce que vous voulez\nen une phrase libre, 1 000 caractères au plus — « Marque lu et supprime partout », par exemple —, puis « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Proposer un\nplan"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » (ou Ctrl + Entrée). L'assistant lit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "l'objet, l'expéditeur, la date et le début du texte"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de chaque conversation\ncochée — jamais les pièces jointes — et propose, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "conversation par conversation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", des actions : poser ou retirer une\npastille, classer dans une affaire ou en retirer, marquer lu ou non lu, mettre en sommeil, transférer à un membre, supprimer,\nbloquer l'expéditeur. Le plan arrive "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "par lots de cinq conversations"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le panneau dit où il en est, et un bouton coupe la\ndemande. Chaque action porte son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "motif"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/assistant-ia.jpg",
+			"alt": "L'assistant IA : la bulle, le panneau avec la demande écrite, « Proposer un plan », le plan d'une conversation avec ses actions et leurs motifs, « Accepter le plan », « Refuser le plan » et « Tout accepter »",
+			"width": 472,
+			"height": 824
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Rien ne se fait sans vous."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le plan se lit, puis s'accepte ou se refuse "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "conversation par conversation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Accepter le plan"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " »\napplique toutes ses actions, dans l'ordre du plan ; « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Refuser le plan"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » la laisse telle quelle. On ne modifie pas une action : on\nrefuse, ou on refait une demande, qui "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "remplace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le plan. Chaque action passe par le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "même geste que sur la page"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", avec\nvos droits : ce que votre rôle ne permet pas est refusé par le CRM et dit sur la ligne de la conversation, qu'on peut\nréessayer. Une action "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "irréversible"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — supprimer partout, bloquer l'expéditeur — porte ce mot et demande "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sa propre\nconfirmation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la même que sur la page, sous la ligne. Refuser cette confirmation laisse les autres actions faites.\n« "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Tout accepter"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » demande d'abord confirmation, en disant le nombre d'actions et de conversations, et n'applique que les\nactions "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sans"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " confirmation : les irréversibles restent proposées, à valider une à une. Après chaque action appliquée, la\nliste se met à jour — une conversation classée ou supprimée la quitte —, et sa ligne reste dans le plan, marquée comme faite."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le plan n'est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "conservé nulle part"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le fermer, recharger la page ou changer de dossier le fait disparaître. Sans\nassistant — non configuré, ou son serveur ne répond pas —, le panneau en dit la raison et ne propose rien : les gestes de la page\nrestent entiers. Au clavier, la bulle s'ouvre à Entrée ou à l'Espace, le curseur entre sur la demande, Échap referme le\npanneau et rend la main à la bulle, et Tab parcourt les lignes du plan."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
 					"type": "text",
 					"text": "Tout cela se fait au clavier : la case se coche à l'Espace, le menu se parcourt aux flèches, et chaque confirmation rend\nla main à ce qui l'a ouverte."
 				}
