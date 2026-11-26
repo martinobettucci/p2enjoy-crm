@@ -1,5 +1,6 @@
 // @spec CRM-016 (docs/BACKLOG.md) — résolution sûre d'une fonction edge
 // @spec docs/SPEC-edge-functions.md §4 (routeur principal)
+// @spec CRM-166 (docs/BACKLOG.md) — `repertoireDe` : le plan de l'assistant de l'inbox servi depuis `_ia-inbox` (docs/SPEC-ia.md §17.6)
 // @spec CRM-163 (docs/BACKLOG.md) — `repertoireDe` : la passe des pastilles servie depuis sa propre voie, `_ia-pastilles`
 //       (docs/SPEC-ia.md §16.2 ; docs/SPEC-edge-functions.md §4)
 
@@ -29,7 +30,10 @@ export function resolveFunctionRoute(pathname: string): FunctionRoute {
  */
 export function repertoireDe(functionName: string, pathname: string): string {
 	const [, deuxieme] = pathname.split('/').filter(Boolean)
-	return functionName === 'ia' && deuxieme === 'pastilles' ? '_ia-pastilles' : functionName
+	if (functionName === 'ia' && deuxieme === 'pastilles') return '_ia-pastilles'
+	// `CRM-166` : le plan de l'assistant de l'inbox a sa voie, pour ne bloquer ni l'assistant de conception ni la passe (docs/SPEC-ia.md §17.6).
+	if (functionName === 'ia' && deuxieme === 'inbox') return '_ia-inbox'
+	return functionName
 }
 
 /** Un identifiant entrant n'est repris que s'il reste court et sans caractère de contrôle. */

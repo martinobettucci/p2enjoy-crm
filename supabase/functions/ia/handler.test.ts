@@ -123,6 +123,10 @@ function banc(options: {
 		prendreEvaluation: async () => null,
 		cloreEvaluation: async () => {},
 		genererPastilles: async () => ({ ok: false, echec: 'serveur_injoignable' }),
+		// `CRM-166` : le plan de l'inbox a son propre banc (`inbox.test.ts`) ; ici, des valeurs neutres.
+		lireContexteInbox: async () => null,
+		lireFilsInbox: async () => null,
+		genererInbox: async () => ({ ok: false, echec: 'serveur_injoignable' }),
 	}
 	return b
 }

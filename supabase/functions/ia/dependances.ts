@@ -1,3 +1,5 @@
+// @spec CRM-166 (docs/BACKLOG.md) — tranche T1 : `lireContexteInbox`, `lireFilsInbox` (les trois fonctions de lecture de la base, avec le jeton
+//       de la personne) et `genererInbox` (docs/SPEC-ia.md §17.6, §17.7)
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T2.d.1 : les champs communs non archivés de l'espace, lus sous la RLS de
 //       l'appelant et envoyés au modèle avec le catalogue (docs/SPEC-ia.md §6.1, décision 825)
 // @spec CRM-163 (docs/BACKLOG.md) — `libererPasse` : la passe rend le bail de la passe (`release_label_pass`,
@@ -22,6 +24,7 @@ import type { DependancesIa, ResultatCreation, Suggestion } from './handler.ts'
 import type { Defaut } from './proposition.ts'
 import { generer, lireEtat } from './ollama.ts'
 import { BORNE_PASTILLE_MS, type MessageAEvaluer, type Pastille } from './pastilles.ts'
+import { BORNE_PLAN_MS, type ContexteInbox, type FilLu } from './inbox.ts'
 
 type Fetch = (url: string, init?: RequestInit) => Promise<Response>
 type LireEnv = (nom: string) => string | undefined
@@ -251,6 +254,38 @@ export function creerDependances(
 
 		genererPastilles: (cible, messages, schema) =>
 			generer(cible, configuration.modele, configuration.contexte, messages, schema, requete, maintenantMs, BORNE_PASTILLE_MS, 0),
+
+		async lireContexteInbox(jeton, workspaceId) {
+			const reponse = await requete(rest('rpc/inbox_assistant_context'), {
+				method: 'POST',
+				headers: commeAppelant(jeton),
+				body: JSON.stringify({ p_workspace_id: workspaceId }),
+				signal: signal(),
+			})
+			if (reponse.status === 401 || reponse.status === 403) return 'refuse'
+			if (!reponse.ok) return null
+			const corps: unknown = await reponse.json()
+			if (typeof corps !== 'object' || corps === null) return null
+			const { labels, cards, members } = corps as Record<string, unknown>
+			if (!Array.isArray(labels) || !Array.isArray(cards) || !Array.isArray(members)) return null
+			return { labels, cards, members } as ContexteInbox
+		},
+
+		async lireFilsInbox(jeton, portee) {
+			const reponse = await requete(rest('rpc/inbox_assistant_messages'), {
+				method: 'POST',
+				headers: commeAppelant(jeton),
+				body: JSON.stringify({ p_scope: portee }),
+				signal: signal(),
+			})
+			if (reponse.status === 401 || reponse.status === 403) return 'refuse'
+			// `invalid_scope`, `filter_required` et `too_many_threads` sont des refus de forme (22023), jamais une panne.
+			if (reponse.status === 400) return 'portee_invalide'
+			return reponse.ok ? await lignes<FilLu>(reponse) : null
+		},
+
+		genererInbox: (cible, messages, schema, signalDuClient) =>
+			generer(cible, configuration.modele, configuration.contexte, messages, schema, requete, maintenantMs, BORNE_PLAN_MS, 0, signalDuClient),
 
 		lireEtat: (cible, modele) => lireEtat(cible, modele, requete),
 		generer: (cible, messages, schema) =>

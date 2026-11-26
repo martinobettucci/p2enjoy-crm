@@ -1379,9 +1379,15 @@ type _vueDerivationColonnes = Expect<
 // `0204` d'INC-216, TRANCHE T1, ajoute `workspace_set_timezone` (l'administrateur de l'espace ou un super-administrateur règle le
 // fuseau de ses e-mails, `docs/SPEC-modeles-emails.md` §8.6 bis). CE QUI ÉCHAPPE AU GÉNÉRATEUR : les refus `forbidden` (42501) et
 // `invalid_timezone` (22023). Le compte s'accroît d'une.
+// `0207` de CRM-166, TRANCHE T1, ajoute `inbox_assistant_threads`, `inbox_assistant_messages` et `inbox_assistant_context`, trois
+// LECTURES de l'assistant de l'inbox sous la RLS (`docs/SPEC-ia.md` §17.6). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `workspace_not_member` (42501) et
+// `too_many_threads` (22023). Le compte s'accroît de trois.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'inbox_assistant_threads'
+    | 'inbox_assistant_messages'
+    | 'inbox_assistant_context'
     | 'workspace_set_timezone'
     | 'platform_connector_instructions'
     | 'platform_set_connector_instructions'

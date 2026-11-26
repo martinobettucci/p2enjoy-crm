@@ -5835,6 +5835,31 @@ export type Database = {
           unread_count: number
         }[]
       }
+      inbox_assistant_context: {
+        Args: { p_workspace_id: string }
+        Returns: Json
+      }
+      inbox_assistant_messages: {
+        Args: { p_scope: Json }
+        Returns: {
+          body_html: string
+          body_text: string
+          from_address: string
+          from_name: string
+          message_id: string
+          received_at: string
+          subject: string
+          thread_key: string
+          workspace_id: string
+        }[]
+      }
+      inbox_assistant_threads: {
+        Args: { p_scope: Json }
+        Returns: {
+          thread_key: string
+          workspace_id: string
+        }[]
+      }
       inbox_bulk_apply: {
         Args: { p_action: string; p_argument?: Json; p_scope: Json }
         Returns: Json

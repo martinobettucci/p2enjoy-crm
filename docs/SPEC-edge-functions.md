@@ -150,6 +150,10 @@ la fois par répertoire en `oneshot` — un second appel attend 10 s (`--request
 `ia/pastilles/…` est donc servie depuis `/home/deno/functions/_ia-pastilles`, avec l'environnement et la borne de `ia` ;
 un nom qui commence par `_` reste refusé au premier segment.
 
+**Une seconde voie, `_ia-inbox`** (`CRM-166`, `docs/SPEC-ia.md` §17.6) : le plan d'actions de l'assistant de l'inbox (`ia/inbox/…`, jusqu'à 90 s par lot) est servi depuis
+`/home/deno/functions/_ia-inbox`, avec l'environnement et la borne de `ia` — pour ne bloquer ni l'assistant de conception ni la passe des pastilles. Deux plans simultanés
+se bloquent encore entre eux : l'écran relance un « occupé » (§17.6).
+
 Une fonction inconnue est un refus attendu, pas une erreur serveur. Une panne inattendue du
 worker rend 502 avec le seul contrat public `{ "error": "function_unavailable", "request_id":
 "…" }`. Le diagnostic structuré reste dans les journaux internes, sans recopier le message brut

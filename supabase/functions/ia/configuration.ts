@@ -1,3 +1,4 @@
+// @spec CRM-166 (docs/BACKLOG.md) — les scénarios `inbox`, `inbox_lent` et `inbox_invalide` du simulateur (docs/SPEC-ia.md §17.9)
 // @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : la configuration de l'assistant IA et sa cible
 // @spec docs/SPEC-ia.md §3 (les quatre variables `OLLAMA_*`), §4 (mode dégradé), §11.6 (le simulateur,
 //       instrumentation du seul développement) ; docs/JOURNAL.md décision 617 ; tranche T3.b : le scénario
@@ -33,6 +34,11 @@ export const SCENARIOS_SIMULATEUR = [
 	'panne',
 	// `CRM-163` (docs/SPEC-ia.md §16.6) : `pastilles_lentes`, la réponse de `pastilles` après une attente de 4 s.
 	'pastilles_lentes',
+	// `CRM-166` (docs/SPEC-ia.md §17.9) : `inbox`, déterministe, avec un fil et une cible que la fonction doit rejeter ; `inbox_lent`, la
+	// réponse de `inbox` après 4 s ; `inbox_invalide`, un JSON hors schéma.
+	'inbox',
+	'inbox_lent',
+	'inbox_invalide',
 ] as const
 
 export type ConfigurationIa = {

@@ -1,3 +1,4 @@
+// @spec CRM-166 (docs/BACKLOG.md) — `generer` accepte un signal externe : le départ du client coupe la génération d'un plan (docs/SPEC-ia.md §17.8)
 // @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : le client du serveur Ollama
 // @spec docs/SPEC-ia.md §3 (usage : sortie structurée, température basse, borne de 120 s, aucune
 //       nouvelle tentative ; refus traduits), §11.3 (état : raisons `cle_refusee`, `serveur_injoignable`,
@@ -93,6 +94,8 @@ export async function generer(
 	maintenantMs: () => number = () => Date.now(),
 	borneMs = BORNE_GENERATION_MS,
 	temperature = TEMPERATURE,
+	/** `CRM-166` : le départ du client coupe la génération (docs/SPEC-ia.md §17.8) — la voie ne reste pas occupée pour rien. */
+	signalExterne?: AbortSignal,
 ): Promise<Generation> {
 	const debut = maintenantMs()
 	let reponse: Response
@@ -107,7 +110,7 @@ export async function generer(
 				options: { num_ctx: contexte, temperature },
 				messages,
 			}),
-			signal: AbortSignal.timeout(borneMs),
+			signal: signalExterne === undefined ? AbortSignal.timeout(borneMs) : AbortSignal.any([AbortSignal.timeout(borneMs), signalExterne]),
 		})
 	} catch (erreur) {
 		return { ok: false, echec: estDelai(erreur) ? 'delai_depasse' : 'serveur_injoignable' }

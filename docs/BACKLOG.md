@@ -21023,8 +21023,9 @@ juge lui-même) ; question 2 : sans objet.
 la voie `_ia-inbox` — CRM-163 —, le simulateur), `docs/SPEC-mail-subsystem.md` §36 (la bulle, le plan, l'application par les gestes de la page,
 « Tout accepter »), `docs/DESIGN_SYSTEM.md` §5.116. Le manuel (inbox) et le contrat suivent le code.
 **Tranches** :
-- [ ] **T1 — la fonction** : `POST /ia/inbox/plan`, la voie `_ia-inbox` et son routage dans `main`, les deux fonctions de lecture (une migration,
-  `database.types.ts` régénéré), le simulateur (`inbox`, `inbox_lent`, `inbox_invalide`) ; unitaires, pgTAP, API (dont la concurrence, rouge avant la voie) ;
+- [x] **T1 — la fonction** : `POST /ia/inbox/plan`, la voie `_ia-inbox` et son routage dans `main`, les trois fonctions de lecture (migration `0207`,
+  `database.types.ts` régénéré), le simulateur (`inbox`, `inbox_lent`, `inbox_invalide`) ; unitaires, pgTAP, API (dont la concurrence) ;
+  **faite et vérifiée en développement le 2026-11-26** : unitaires `supabase/functions` 420/420 (routeur et voies 25/25), pgTAP `0192` 16/16, API `e2e/api/ia-inbox.spec.ts` 7/7 sur la base à 204 migrations, `functions` et `ollama-simule` recréés, typecheck propre. **Non rejoué** : la preuve rouge-avant de la concurrence (voie absente) ; le test passe avec la voie. Sous-ensemble du périmètre, pas une campagne complète.
 - [ ] **T2 — l'écran** : la lib du plan, la bulle et son panneau dans `RouteInbox`, l'acceptation par les gestes de la page, « Tout accepter » ;
   Vitest, E2E souris et clavier contre le simulateur, captures observées ; **le responsable confirme la lecture ciblée du design system avant le code** ;
 - [ ] **T3 — le manuel, le contrat, le seed** : le chapitre de l'inbox, `docs/PROD_MIGRATIONS.md`, le changelog ; l'unité passe `[P]`.

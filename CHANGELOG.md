@@ -15,6 +15,9 @@ d'exécuter le code attendu.
 
 - **INC-373, `verify-workflows.sh` ne rejoue que les specs de son unité** (`--suites-completes` rétablit les suites entières) et nomme les triggers et les workflows globaux du seed au lieu de les compter. Outillage de développement : rien ne change dans le produit livré.
 - **Tri du lot des intermittents d'interface** (INC-310 et fiches liées) : sous `lg`, la commande de recherche à icône donne le focus au champ, et `Échap` ferme la palette (INC-284) ; la grille de temps accepte une flèche frappée dès la prise de focus d'une case remplie (INC-287) ; les captures attendent la fin des transitions de la barre latérale (INC-237). Les fiches non reproduites au rejeu restent ouvertes jusqu'à la prochaine campagne complète ; les 503 de transport de `session/prolonger` sont ajoutés à INC-311.
+- **`CRM-166` T1 — la fonction de l'assistant de l'inbox** (décisions 994 et 997). `POST /ia/inbox/plan` lit, avec le jeton de la personne, des fils choisis (cinq au plus par lot), les envoie au modèle avec
+  la demande écrite, les pastilles, les affaires et les membres de l'espace, contrôle la sortie — une clé, un fil ou une action inconnus sont rejetés et comptés — et rend un plan, sans rien écrire
+  dans la messagerie. Voie `_ia-inbox` : le plan ne bloque ni l'assistant de conception ni la passe des pastilles. Trois fonctions de lecture en base. L'écran suit (T2). Contrat §2.87.
 
 ## [Publié]
 

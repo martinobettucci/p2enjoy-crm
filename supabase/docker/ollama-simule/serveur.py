@@ -12,6 +12,8 @@
 #       inconnue que la fonction doit rejeter — et `panne` — un `500` à chaque génération (docs/SPEC-ia.md §15.5)
 # @spec CRM-163 (docs/BACKLOG.md) — le scénario `pastilles_lentes` : la réponse de `pastilles`, après une attente, pour une
 #       passe plus longue que les 10 s d'attente du runtime (docs/SPEC-ia.md §16.6)
+# @spec CRM-166 (docs/BACKLOG.md) — tranche T1 : les scénarios `inbox`, `inbox_lent` et `inbox_invalide` — le plan de l'assistant de l'inbox,
+#       déterministe, lu dans la demande (docs/SPEC-ia.md §17.9)
 #
 # Bibliothèque standard seule. Le scénario voyage comme clé — `Bearer simule-<scénario>` —, là où le serveur
 # réel attend la sienne : la fonction `ia` n'a qu'un chemin d'appel, et ce sont les preuves qui choisissent.
@@ -154,7 +156,11 @@ def modification(messages):
 
 
 # `CRM-141` T2 : les scénarios dont la réponse se calcule, et celui qui tombe en panne.
-SCENARIOS_CALCULES = {"modification", "pastilles", "pastilles_lentes", "panne"}
+# `CRM-166` : `inbox`, `inbox_lent` et `inbox_invalide` — le plan de l'assistant de l'inbox (docs/SPEC-ia.md §17.9).
+SCENARIOS_CALCULES = {"modification", "pastilles", "pastilles_lentes", "panne", "inbox", "inbox_lent", "inbox_invalide"}
+
+# `CRM-166` : l'attente de chaque génération du scénario `inbox_lent`, en secondes.
+ATTENTE_INBOX_LENT = 4
 
 # `CRM-163` : l'attente de chaque génération du scénario `pastilles_lentes`, en secondes.
 ATTENTE_PASTILLES_LENTES = 4
@@ -179,6 +185,50 @@ def pastilles(messages):
         if any(len(mot) >= 4 and mot in cible for mot in re.findall(r"\w+", _sans_accents(nom)))
     ]
     return json.dumps({"pastilles": cles + ["p99"]}, ensure_ascii=False)
+
+
+def inbox(messages):
+    """Le plan de l'assistant de l'inbox, calculé de la DEMANDE telle que la fonction l'écrit (docs/SPEC-ia.md §17.9) : une action
+    par verbe reconnu dans la demande écrite — « non lu », « lu », « sommeil », « supprime ici », « supprime partout », « bloque »,
+    « transfere », « pastille <nom> », « classe dans <titre> » — pour chaque fil du lot, plus DEUX entrées que la fonction doit
+    rejeter : un fil `f99` et, sur le premier fil, une cible `p99`."""
+    contenu = "\n".join(m.get("content", "") for m in messages if m.get("role") == "user")
+    demande = _sans_accents(contenu.split("Demande de la personne :\n", 1)[1].split("\n\nPastilles possibles :", 1)[0]) if "Demande de la personne :" in contenu else ""
+    pastilles = re.findall(r"^- (p\d+) : (.+?)(?: — .*)?$", contenu.split("Pastilles possibles :", 1)[1].split("Affaires où classer :", 1)[0], re.M) if "Pastilles possibles :" in contenu else []
+    affaires = re.findall(r"^- (a\d+) : (.+)$", contenu.split("Affaires où classer :", 1)[1].split("Membres à qui transférer :", 1)[0], re.M) if "Affaires où classer :" in contenu else []
+    membres = re.findall(r"^- (u\d+) : (.+)$", contenu.split("Membres à qui transférer :", 1)[1].split("Durées de sommeil", 1)[0], re.M) if "Membres à qui transférer :" in contenu else []
+    fils = re.findall(r"^\[(f\d+)\]$", contenu, re.M)
+    motif = "Demandé par la personne."
+
+    def action(nom, cible=""):
+        return {"action": nom, "cible": cible, "motif": motif}
+
+    actions = []
+    for cle, nom in pastilles:
+        if "pastille " + _sans_accents(nom) in demande:
+            actions.append(action("pose_pastille", cle))
+    for cle, titre in affaires:
+        if "classe dans " + _sans_accents(titre) in demande:
+            actions.append(action("classe", cle))
+    if "non lu" in demande:
+        actions.append(action("non_lu"))
+    elif re.search(r"\blu\b", demande):
+        actions.append(action("lu"))
+    if "sommeil" in demande:
+        actions.append(action("sommeil", "demain"))
+    if "transfere" in demande and membres:
+        actions.append(action("transfere", membres[0][0]))
+    if "bloque" in demande:
+        actions.append(action("bloque_expediteur"))
+    if "supprime partout" in demande:
+        actions.append(action("supprime_partout"))
+    elif "supprime ici" in demande:
+        actions.append(action("supprime_ici"))
+    plans = [{"fil": fil, "actions": list(actions)} for fil in fils if actions]
+    if plans:
+        plans[0]["actions"] = plans[0]["actions"] + [action("pose_pastille", "p99")]
+    plans.append({"fil": "f99", "actions": [action("lu")]})
+    return json.dumps({"plans": plans}, ensure_ascii=False)
 
 
 class Simulateur(BaseHTTPRequestHandler):
@@ -233,6 +283,13 @@ class Simulateur(BaseHTTPRequestHandler):
             contenu = modification(corps.get("messages", []))
         elif scenario == "pastilles":
             contenu = pastilles(corps.get("messages", []))
+        elif scenario == "inbox":
+            contenu = inbox(corps.get("messages", []))
+        elif scenario == "inbox_lent":
+            time.sleep(ATTENTE_INBOX_LENT)
+            contenu = inbox(corps.get("messages", []))
+        elif scenario == "inbox_invalide":
+            contenu = json.dumps({"rien": 1})
         elif scenario == "pastilles_lentes":
             # Le serveur est multi-fil : l'attente ne retient que cette requête.
             time.sleep(ATTENTE_PASTILLES_LENTES)

@@ -1,3 +1,6 @@
+// @spec CRM-166 (docs/BACKLOG.md) — tranche T1 : la route `POST /ia/inbox/plan` — le plan d'actions de l'assistant de l'inbox, lu avec le jeton
+//       de la personne, généré par lots de 5 fils, contrôlé, rendu en flux NDJSON ; la fonction n'écrit rien dans la messagerie
+//       (docs/SPEC-ia.md §17 ; docs/SPEC-mail-subsystem.md §36 ; docs/JOURNAL.md décisions 994 et 997)
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T2.d.1 : les champs communs non archivés de l'espace, lus sous la RLS de
 //       l'appelant et envoyés au modèle avec le catalogue (docs/SPEC-ia.md §6.1, décision 825)
 // @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : la fonction edge `ia`
@@ -33,6 +36,7 @@ import {
 	type PorteeDeModification,
 } from './consignes.ts'
 import type { EchecGeneration, Etat, Generation, Message } from './ollama.ts'
+import { controlerPlan, demandeInbox, DEMANDE_MAX, LOT_FILS, type ContexteInbox, type FilLu, type PlanDeFil } from './inbox.ts'
 import { BUDGET_PASSE_MS, controlerSortie, demandeDePastilles, type MessageAEvaluer } from './pastilles.ts'
 import { mettreEnForme, SCHEMA_MODIFICATION, SCHEMA_WORKFLOW, type Defaut, type Proposition } from './proposition.ts'
 
@@ -110,6 +114,15 @@ export type DependancesIa = {
 	cloreEvaluation(messageId: string, ids: readonly string[] | null, echec: EchecGeneration | null): Promise<void>
 	/** Une génération bornée à 30 s, à température 0 (docs/SPEC-ia.md §15.2). */
 	genererPastilles(cible: Cible, messages: readonly Message[], schema: unknown): Promise<Generation>
+	/**
+	 * `CRM-166` — avec le jeton de la personne : le contexte de l'espace que le modèle reçoit (`inbox_assistant_context`). `refuse` si
+	 * l'espace n'est pas le sien ; `null` si la lecture échoue (docs/SPEC-ia.md §17.6).
+	 */
+	lireContexteInbox(jeton: string, workspaceId: string): Promise<ContexteInbox | 'refuse' | null>
+	/** `CRM-166` — avec le jeton de la personne : le message de chaque fil de la portée (`inbox_assistant_messages`). */
+	lireFilsInbox(jeton: string, portee: unknown): Promise<readonly FilLu[] | 'refuse' | 'portee_invalide' | null>
+	/** `CRM-166` — un plan borné à 90 s, à température 0, coupé par le départ du client (docs/SPEC-ia.md §17.7, §17.8). */
+	genererInbox(cible: Cible, messages: readonly Message[], schema: unknown, signal: AbortSignal): Promise<Generation>
 }
 
 /** L'en-tête qui porte le secret d'appel de la passe des pastilles (`CRM-141` T2). */
@@ -302,6 +315,78 @@ async function mener(
 	)
 }
 
+/** L'issue d'un plan (docs/SPEC-ia.md §17.6) : le plan contrôlé, ou l'échec nommé du lot. */
+export type IssuePlan =
+	| { readonly issue: 'plan'; readonly plans: readonly PlanDeFil[]; readonly rejetees: number; readonly ecartes: number }
+	| { readonly issue: 'echec'; readonly echec: EchecGeneration }
+
+/**
+ * Le flux NDJSON d'un plan (docs/SPEC-ia.md §17.6, comme le §11.1) : la première ligne part aussitôt, un battement tient la connexion
+ * sous le délai de lecture de Kong, la dernière porte l'issue. **Le départ du client coupe la génération** (§17.8) : la voie ne reste pas
+ * occupée par un plan que personne n'attend.
+ */
+function fluxPlan(d: DependancesIa, premiere: Record<string, unknown>, travail: (signal: AbortSignal) => Promise<IssuePlan>): Response {
+	const encodeur = new TextEncoder()
+	const coupure = new AbortController()
+	let battement: ReturnType<typeof setInterval> | undefined
+	const corps = new ReadableStream<Uint8Array>({
+		start(controleur) {
+			const ecrire = (ligne: unknown) => {
+				try {
+					controleur.enqueue(encodeur.encode(`${JSON.stringify(ligne)}\n`))
+				} catch {
+					// Le client est parti : la génération est coupée par `cancel`.
+				}
+			}
+			ecrire(premiere)
+			battement = setInterval(() => ecrire({ attente: true }), d.battementMs)
+			return travail(coupure.signal)
+				.catch((): IssuePlan => {
+					d.journaliser({ evenement: 'plan_inbox_echoue', code: 'erreur_interne' })
+					return { issue: 'echec', echec: 'serveur_injoignable' }
+				})
+				.then((issue) => ecrire(issue))
+				.finally(() => {
+					clearInterval(battement)
+					try {
+						controleur.close()
+					} catch {
+						// déjà fermé par le départ du client
+					}
+				})
+		},
+		cancel() {
+			clearInterval(battement)
+			coupure.abort()
+		},
+	})
+	return new Response(corps, {
+		status: 202,
+		headers: { 'content-type': 'application/x-ndjson; charset=utf-8', 'cache-control': 'no-store' },
+	})
+}
+
+/**
+ * La portée d'un lot (docs/SPEC-ia.md §17.6) : une description de portée de `CRM-156` qui désigne EXPLICITEMENT 1 à 5 fils d'un seul
+ * espace. Sans fils cochés, la fonction ne lit rien : un lot ne se confond jamais avec « tout le filtre ». La base valide le reste.
+ */
+function porteeDeLot(scope: unknown): { readonly espace: string; readonly fils: number } | null {
+	if (typeof scope !== 'object' || scope === null || Array.isArray(scope)) return null
+	const { workspace_id: espace, threads } = scope as Record<string, unknown>
+	if (typeof espace !== 'string' || !UUID.test(espace) || !Array.isArray(threads)) return null
+	if (threads.length < 1 || threads.length > LOT_FILS) return null
+	const valides = threads.every(
+		(fil) =>
+			typeof fil === 'object' &&
+			fil !== null &&
+			(fil as Record<string, unknown>).workspace_id === espace &&
+			typeof (fil as Record<string, unknown>).thread_key === 'string' &&
+			((fil as Record<string, unknown>).thread_key as string).length > 0 &&
+			((fil as Record<string, unknown>).thread_key as string).length <= 2_000,
+	)
+	return valides ? { espace, fils: threads.length } : null
+}
+
 const estPorteeDeModification = (valeur: unknown): valeur is PorteeDeModification =>
 	(PORTEES_DE_MODIFICATION as readonly unknown[]).includes(valeur)
 
@@ -337,6 +422,57 @@ export async function traiterIa(requete: Request, d: DependancesIa): Promise<Res
 		} finally {
 			await d.libererPasse()
 		}
+	}
+
+	// `CRM-166` : le plan de l'assistant de l'inbox (docs/SPEC-ia.md §17.6). La personne est authentifiée par son jeton, la base lit
+	// ce qu'elle voit, et RIEN n'est écrit : le plan est rendu à l'écran, qui l'applique par les gestes de la page.
+	if (route === 'inbox' && id === 'plan' && chemin.length === 3) {
+		if (requete.method !== 'POST') return repondre(405, { erreur: 'methode_refusee' }, { allow: 'POST' })
+		const jeton = jetonDe(requete)
+		if (jeton === null) return repondre(401, { erreur: 'session_requise' })
+		const corps = await lireCorps(requete)
+		const demande = typeof corps?.demande === 'string' ? corps.demande.trim() : ''
+		const lot = porteeDeLot(corps?.scope)
+		if (demande === '' || demande.length > DEMANDE_MAX || lot === null) return repondre(400, { erreur: 'demande_invalide' })
+		if (cible === null) return repondre(503, { erreur: 'assistant_indisponible', raison: 'cle_absente' })
+		// L'AUTORISATION AVANT LE MODÈLE : un espace qui n'est pas le sien ne déclenche aucun appel au serveur.
+		const contexte = await d.lireContexteInbox(jeton, lot.espace)
+		if (contexte === 'refuse') return repondre(403, { erreur: 'refuse' })
+		if (contexte === null) return repondre(503, { erreur: 'lecture_impossible' })
+		const lus = await d.lireFilsInbox(jeton, corps?.scope)
+		if (lus === 'refuse') return repondre(403, { erreur: 'refuse' })
+		if (lus === 'portee_invalide') return repondre(400, { erreur: 'demande_invalide' })
+		if (lus === null) return repondre(503, { erreur: 'lecture_impossible' })
+		// Les fils qu'elle ne voit pas, ou qui ont disparu depuis : écartés, comptés, dits (docs/SPEC-ia.md §17.3).
+		const ecartes = Math.max(0, lot.fils - lus.length)
+		d.journaliser({ evenement: 'plan_inbox_lance', fils: lus.length, ecartes, simulee: cible.simulee })
+		return fluxPlan(d, { accepte: true, fils: lus.length }, async (signal) => {
+			if (lus.length === 0) return { issue: 'plan', plans: [], rejetees: 0, ecartes }
+			const demandeModele = demandeInbox(demande, lus, contexte)
+			const issue = await d.genererInbox(cible, demandeModele.messages, demandeModele.schema, signal)
+			if (!issue.ok) {
+				d.journaliser({ evenement: 'plan_inbox_echoue', code: issue.echec, simulee: cible.simulee })
+				return { issue: 'echec', echec: issue.echec }
+			}
+			const controle = controlerPlan(issue.contenu, demandeModele.cles)
+			if (controle === null) {
+				d.journaliser({ evenement: 'plan_inbox_echoue', code: 'reponse_invalide', simulee: cible.simulee })
+				return { issue: 'echec', echec: 'reponse_invalide' }
+			}
+			// JAMAIS le texte d'une demande, d'un objet, d'une adresse ni d'un titre : des comptes (CLAUDE.md §20).
+			d.journaliser({
+				evenement: 'plan_inbox_ecrit',
+				duree_ms: issue.dureeMs,
+				jetons_entree: issue.jetonsEntree,
+				jetons_sortie: issue.jetonsSortie,
+				fils: lus.length,
+				actions: controle.plans.reduce((somme, plan) => somme + plan.actions.length, 0),
+				rejetees: controle.rejetees,
+				ecartes,
+				simulee: cible.simulee,
+			})
+			return { issue: 'plan', plans: controle.plans, rejetees: controle.rejetees, ecartes }
+		})
 	}
 
 	if (route === 'etat' && id === undefined) {

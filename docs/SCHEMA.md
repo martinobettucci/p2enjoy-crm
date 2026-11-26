@@ -2011,6 +2011,20 @@ n'est écrite que par la fonction, avec la clé de service. Les révisions sont 
 aucun client ne les supprime, mais la cascade d'une suggestion ou d'un espace les emporte. Aucune donnée
 personnelle par conception : une proposition est une structure de configuration.
 
+### Migration `0207` — `CRM-166` T1 : l'assistant de l'inbox, trois fonctions de lecture (`0207_assistant_inbox.sql` ; spécifiée le 2026-11-25, avant le code)
+
+`docs/SPEC-ia.md` §17.3, §17.6 ; décisions 994 et 997. **Aucune table, aucune colonne, aucune écriture** : le plan n'est conservé nulle part.
+
+- **`public.inbox_assistant_threads(p_scope jsonb)`** `returns table (workspace_id, thread_key)`, `SECURITY DEFINER`, `search_path` vide, `stable` : les clés des fils
+  d'une portée, du plus récent au plus ancien, **51 au plus** ; passe par `app.inbox_scope_messages` (§32.2), donc ne rend que ce que l'appelant voit.
+- **`public.inbox_assistant_messages(p_scope jsonb)`** `returns table (workspace_id, thread_key, message_id, subject, from_name, from_address, received_at, body_text,
+  body_html)`, mêmes réglages : par fil, le message **reçu** le plus récent (à défaut le plus récent), **50 fils au plus** (`too_many_threads`, 22023). Aucune pièce jointe, aucun destinataire.
+- **`public.inbox_assistant_context(p_workspace_id uuid)`** `returns jsonb`, **`SECURITY INVOKER`**, `stable` : `labels` (les pastilles non archivées de l'espace), `cards` (100 au plus, les plus
+  récemment modifiées, hors corbeille, lues sous la RLS), `members` (hors l'appelant). `workspace_not_member` (42501) si l'espace n'est pas le sien.
+- Les trois : `execute` à `authenticated`, rien à `anon`.
+- **Preuves** : pgTAP `0192_assistant_inbox` (16 assertions) ; API `e2e/api/ia-inbox.spec.ts`.
+- **Retour arrière** : `drop function` des trois fonctions.
+
 ### Migration `0149` — l'identité de service ne s'emprunte plus (INC-335, décision 805 ; livrée en développement le 2026-11-02)
 
 `docs/SPEC-mail-subsystem.md` §14.2 et §19.4 ; `docs/SPEC-modeles-emails.md` §12.4 et §12.7. **`queue_outbound_email`**

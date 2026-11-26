@@ -1223,13 +1223,17 @@ et la liste des actions `{action, cible: {id, libelle} | null, motif, confirmati
 
 ### 17.6 La route, la voie et la concurrence
 
-- **`POST /ia/inbox/plan`**, corps `{workspace_id, demande, fils: [{thread_key}]}` (5 au plus). Elle authentifie la personne par son jeton ;
-  `401` sans jeton, `400` demande vide, trop longue ou plus de 5 fils, `403` si l'espace n'est pas le sien. Réponse **`202`, flux NDJSON** comme le
+- **`POST /ia/inbox/plan`**, corps `{scope, demande}` : `scope` est la **description de portée de `CRM-156`** (`docs/SPEC-mail-subsystem.md` §32.2) qui
+  désigne **1 à 5 fils explicites** (`threads`) d'un seul espace ; « tout le filtre » ne se confond jamais avec un lot. Elle authentifie la personne par
+  son jeton ; `401` sans jeton, `400` demande vide ou trop longue, portée sans fil, plus de 5 fils ou fils d'un autre espace, `403` si l'espace n'est pas le
+  sien — **avant tout appel au modèle**, `503` sans clé ou si la lecture échoue. Réponse **`202`, flux NDJSON** comme le
   §11.1 : `{"attente": true}` toutes les 15 s, puis `{"issue": "plan", …}` ou `{"issue": "echec", "echec": code}`.
-- **Deux fonctions de lecture, sous la RLS** (une migration, dont le numéro est pris après synchronisation ; `docs/SCHEMA.md`) — elles passent par `app.inbox_scope_messages` (§32.2), la
+- **Trois fonctions de lecture, sous la RLS** (une migration, dont le numéro est pris après synchronisation ; `docs/SCHEMA.md`) — elles passent par `app.inbox_scope_messages` (§32.2), la
   portée des actions groupées : **`public.inbox_assistant_threads(p_scope jsonb)`** rend les clés des fils d'une portée, **51 au plus** — l'écran
-  s'en sert pour « tout sélectionner » sous un filtre et refuse si la 51ᵉ existe ; **`public.inbox_assistant_messages(p_workspace_id uuid,
-  p_thread_keys text[])`** rend, par fil, le message reçu le plus récent (objet, expéditeur, date, `body_text`, `body_html`), **50 fils au plus**.
+  s'en sert pour « tout sélectionner » sous un filtre et refuse si la 51ᵉ existe ; **`public.inbox_assistant_messages(p_scope jsonb)`** rend, par fil de
+  la portée, le message reçu le plus récent (objet, expéditeur, date, `body_text`, `body_html`), **50 fils au plus** (`too_many_threads`) ; **`public.inbox_assistant_context(p_workspace_id
+  uuid)`**, `SECURITY INVOKER`, rend les pastilles actives, les 100 affaires les plus récentes que la RLS laisse lire et les membres hors l'appelant (`workspace_not_member` si
+  l'espace n'est pas le sien).
 - **Sa propre voie.** `CRM-163` a mesuré (§16.1) que le runtime ne sert qu'un worker à la fois **par répertoire**, et constaté (§16.5) que deux
   générations de l'assistant se bloquent. Une génération de 40 s sur `ia` ferait échouer l'assistant de conception et `GET /ia/etat` pendant
   tout ce temps : la route a donc **son répertoire, `supabase/functions/_ia-inbox/`**, servi par `main` pour `ia/inbox/…` avec l'environnement

@@ -1,3 +1,4 @@
+// @verifies CRM-166 (docs/BACKLOG.md) — tranche T1 : `ia/inbox/…` servi depuis `_ia-inbox` (docs/SPEC-ia.md §17.6)
 // @verifies CRM-016 (docs/BACKLOG.md) — preuve unitaire du routeur edge
 // @verifies docs/SPEC-edge-functions.md §4, §7.1
 // @verifies CRM-163 (docs/BACKLOG.md) — la passe des pastilles servie depuis sa propre voie, que le premier segment ne peut
@@ -41,6 +42,13 @@ describe('safeRequestId', () => {
 })
 
 describe('repertoireDe (CRM-163, docs/SPEC-ia.md §16.2)', () => {
+	it('le plan de l’assistant de l’inbox est servi depuis `_ia-inbox`, et ce répertoire n’est pas une fonction publique (CRM-166)', () => {
+		expect(repertoireDe('ia', '/ia/inbox/plan')).toBe('_ia-inbox')
+		expect(repertoireDe('ia', '/ia/etat')).toBe('ia')
+		expect(repertoireDe('autre', '/autre/inbox/plan')).toBe('autre')
+		expect(resolveFunctionRoute('/_ia-inbox/inbox/plan')).toEqual({ ok: false, status: 404, error: 'function_not_found' })
+	})
+
 	it('la passe des pastilles est servie depuis `_ia-pastilles`', () => {
 		expect(repertoireDe('ia', '/ia/pastilles/evaluer')).toBe('_ia-pastilles')
 	})

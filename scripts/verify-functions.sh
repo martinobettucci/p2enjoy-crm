@@ -136,11 +136,12 @@ fi
 # **24 depuis `CRM-163`** : 21 COMPTÉS avant lui — `CRM-073` et `CRM-127` avaient ajouté à l'environnement par fonction les deux
 # preuves de `webhooks` et les deux de `mail-connection-test` sans réviser ce compteur (dérive relevée le 2026-11-21) —, plus
 # les trois preuves de la voie de la passe des pastilles (`repertoireDe`, docs/SPEC-ia.md §16.2).
+# **25 depuis `CRM-166`** : une preuve de plus au routeur — le plan de l'assistant de l'inbox est servi depuis `_ia-inbox` (docs/SPEC-ia.md §17.6).
 if npm run --silent test:unit -- ../supabase/functions/main ../supabase/functions/example >"$WORK/unit.log" 2>&1 \
-	&& grep -qE 'Tests +24 passed' "$WORK/unit.log"; then
-	ok "24 tests unitaires du routeur et de sa voie, de l'environnement par fonction, du handler d'exemple et de la règle sans 204"
+	&& grep -qE 'Tests +25 passed' "$WORK/unit.log"; then
+	ok "25 tests unitaires du routeur et de ses voies, de l'environnement par fonction, du handler d'exemple et de la règle sans 204"
 else
-	fail "tests unitaires edge en échec ou compte différent de 24"
+	fail "tests unitaires edge en échec ou compte différent de 25"
 	sed 's/^/        /' "$WORK/unit.log" | tail -n 20
 fi
 

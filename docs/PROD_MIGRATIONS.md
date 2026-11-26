@@ -1823,6 +1823,20 @@ reçoit son résumé. *Écrite et prouvée en développement le 2026-11-25 (7a) 
 le garde ne s'exerce que sur un fichier à appliquer. **Effet en production : nul** — les onze fichiers sont inscrits, aucun fichier du dépôt (204) n'est refusé, et le garde ne change rien à un passage sans fichier nouveau. **Il refusera, à la fenêtre où il paraîtrait, une migration future qui porterait sa propre transaction** : le refus nomme le fichier, et la correction est de retirer l'instruction (le runner enveloppe déjà chaque fichier).
 **Vérification** (`scripts/verify-migrations.sh --runner-seul`, 9 contrôles, sans base) : un nouveau fichier avec `begin;` / `commit;` est refusé et rien n'est appliqué ; chacune des formes (`rollback;`, `start transaction;`, majuscules, retraits) l'est ; un bloc PL/pgSQL n'est pas pris ; `0034` et `0116`, de la liste, passent ; le contenu de `0034` sous un autre nom est refusé ; les 204 migrations du dépôt passent. Rejoué aussi sous l'interpréteur réel du runner (`postgres:17-alpine`, busybox). **Retour arrière** : redéposer l'ancien script.
 
+### 2.87 `CRM-166` T1, décisions 994 et 997 — le plan de l'assistant de l'inbox : la fonction et ses trois lectures (EN ATTENTE)
+
+`docs/SPEC-ia.md` §17 ; `docs/SCHEMA.md` « Migration `0207` ». La migration `0207` (trois fonctions de **lecture**, aucune table), la voie `supabase/functions/_ia-inbox/`, la route `POST /ia/inbox/plan`
+de la fonction `ia` et le routage de `main`. **Aucune variable, aucun secret** : le plan emploie le serveur de l'assistant de conception (`OLLAMA_*`). Rien n'est visible tant que
+T2 (l'écran) n'est pas livrée.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration `0207` | session de livraison, sur instruction du responsable | le runner, comme toute migration (§4) ; un `pg_dump` avant |
+| 2 | Recréer la fonction `functions` | session de livraison | `compose_prod up -d --no-deps --force-recreate --wait functions` : `main` et le répertoire `_ia-inbox` sont lus au démarrage |
+| 3 | Constater | la session de livraison | `GET /functions/v1/ia/etat` rend `200` ; un plan d'un fil rend un flux NDJSON ; aucune ligne `plan_inbox_*` ne porte de texte |
+
+**Retour arrière** : supprimer les trois fonctions (`SCHEMA.md`) et revenir à la fonction `functions` de la révision d'avant.
+
 ## 3. Migrations en attente
 
 **Aucune migration en attente depuis la fenêtre du 2026-11-26 au matin** : la 203 (`CRM-161` T3.d, §2.81), la 204 et la 206 ont été appliquées par elle (révision `66a7bb3a`, décision 1003) ; registre à **203** lignes. Les paragraphes qui suivent décrivent l'attente telle qu'elle était.
