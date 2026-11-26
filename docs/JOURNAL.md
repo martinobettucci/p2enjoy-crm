@@ -42770,3 +42770,7 @@ session sans son accord.
 ### `INC-142` c — l'audit suite par suite
 
 *2026-11-26, session `p2enjoy-crm-dd`.* **Méthode** : `mesurer-residus.sh autour` autour de chaque suite candidate, un verrou par suite et 120 s de pause entre deux (équité envers 30). **Résultat** : un seul résidu mesuré, `move-card.spec.ts` (point « Proposition envoyée » sur `…0c3`) ; `mail_folder_map` retirée par les specs de dossiers = reflet d'une arborescence IMAP supprimée, pas un résidu. **Décision** : corriger `remettre` ; ne pas toucher aux specs de dossiers (aucun contrat de seed ne porte la table). **Piège** : la ligne « AJOUTÉE » ne se reproduit pas une seconde fois sur la même base — le point, une fois là, n'est plus ajouté : la preuve verte exige de remettre d'abord la base à l'état d'avant.
+
+### `INC-142` c — fermeture
+
+*2026-11-26, session `p2enjoy-crm-dd`.* `remettre` de `move-card.spec.ts` retire par la clé de service les points d'étape que les déplacements ont fait naître (créés depuis le chargement du fichier). **Vérifié** : base remise d'abord à l'état d'avant, puis `autour` : 26 passés, aucun résidu ; `tsc -p tsconfig.json` sans erreur.

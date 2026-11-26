@@ -13,6 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **INC-142 c, `move-card.spec.ts` ne laisse plus de point d'étape** sur la card seedée `…0c3` (audit suite par suite avec `mesurer-residus.sh`). Outillage de preuve : rien ne change dans le produit livré.
 - **INC-373, `verify-workflows.sh` ne rejoue que les specs de son unité** (`--suites-completes` rétablit les suites entières) et nomme les triggers et les workflows globaux du seed au lieu de les compter. Outillage de développement : rien ne change dans le produit livré.
 - **Tri du lot des intermittents d'interface** (INC-310 et fiches liées) : sous `lg`, la commande de recherche à icône donne le focus au champ, et `Échap` ferme la palette (INC-284) ; la grille de temps accepte une flèche frappée dès la prise de focus d'une case remplie (INC-287) ; les captures attendent la fin des transitions de la barre latérale (INC-237). Les fiches non reproduites au rejeu restent ouvertes jusqu'à la prochaine campagne complète ; les 503 de transport de `session/prolonger` sont ajoutés à INC-311.
 - **`CRM-166` T1 — la fonction de l'assistant de l'inbox** (décisions 994 et 997). `POST /ia/inbox/plan` lit, avec le jeton de la personne, des fils choisis (cinq au plus par lot), les envoie au modèle avec

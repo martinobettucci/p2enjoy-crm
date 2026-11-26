@@ -128,6 +128,21 @@ async function remettre(requete: APIRequestContext, id: string, avant: Card): Pr
 		},
 	})
 	expect(reponse.status()).toBe(204)
+	await retirerLesPointsAjoutes(requete, id)
+}
+
+/**
+ * INC-142 c (docs/INCONSISTENCY_REPORT.md) — entrer dans une étape ajoute à l'affaire les points de checklist de cette étape, et la remise d'étape
+ * ci-dessus ne les retire pas : `…0c3` en sortait avec un point « Proposition envoyée » de plus (mesuré par `scripts/mesurer-residus.sh autour`). La clé
+ * de service est le seul chemin qui retire un point d'étape ; elle ne retire ici que ceux que CE fichier a fait naître (créés depuis son chargement).
+ */
+const DEBUT_DE_LA_SPEC = new Date().toISOString()
+async function retirerLesPointsAjoutes(requete: APIRequestContext, id: string): Promise<void> {
+	const reponse = await requete.delete(
+		`/rest/v1/card_checklist_items?card_id=eq.${id}&step_item_id=not.is.null&created_at=gte.${encodeURIComponent(DEBUT_DE_LA_SPEC)}`,
+		{ headers: enTetesService() },
+	)
+	expect([200, 204], `les points d'étape ajoutés à ${id} se retirent par la clé de service`).toContain(reponse.status())
 }
 
 /** Appelle `move_card` avec un jeton donné. */
