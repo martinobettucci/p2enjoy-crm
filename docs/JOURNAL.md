@@ -42650,3 +42650,7 @@ correctifs).
 ### `INC-369` — un rouge du rejeu final qui ne montre rien
 
 *2026-11-26, session `p2enjoy-crm-dd`, à la demande de la session de livraison.* **Observation** : 72 contrôles verts, restauration constatée par empreinte pour les quatre fichiers, `test:unit` rejoué ensuite VERT (6467 tests) ; seul le rejeu final était rouge, et son journal n'existe plus. **Hypothèses** : (1) une autre session modifie `webapp/src` en cours de campagne ; (2) un test sous délai par charge ; (3) une vraie dégradation — écartée par les empreintes. **Décision** : ne pas rejouer à l'aveugle ni retenter pour masquer (§18) ; rendre le rouge lisible, puis rejouer le harnais entier sous verrou. **Cause : à consigner après le rejeu.**
+
+### `INC-369` — fermeture
+
+*2026-11-26, session `p2enjoy-crm-dd`.* **Vérifié** : `verify-board.sh` rejoué entier sous verrou `dd-board` : 73 contrôles, aucune anomalie ; branche d'échec jouée sur un journal factice (FAIL, bilan, fin du journal, compte de fichiers modifiés). **Cause du rouge de la campagne : non établie**, non reproduite ; si elle revient, le harnais la montre maintenant.

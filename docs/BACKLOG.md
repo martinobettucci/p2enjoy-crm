@@ -21139,4 +21139,4 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 *`verify-board.sh` n'affiche rien de son rouge au rejeu final. Fiche INC-369. Connecteur MCP : sans objet.*
 
-- [ ] **INC-369 — le rejeu final de `verify-board.sh` montre la cause de son rouge** ; harnais rejoué entier sous verrou, branche d'échec prouvée sur un journal factice.
+- [x] **INC-369 — le rejeu final de `verify-board.sh` montre la cause de son rouge** ; harnais rejoué entier sous verrou, branche d'échec prouvée sur un journal factice.

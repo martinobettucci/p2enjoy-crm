@@ -951,6 +951,11 @@ else
 		ok "npm run test:unit rejoué après les dégradations : vert"
 	else
 		fail "npm run test:unit rouge APRÈS restauration : le harnais a laissé le produit dégradé"
+		# INC-369 : le log est supprimé à la sortie ; sans cette fin de sortie, un rouge dû à une autre
+		# session qui modifie l'arbre en cours de campagne ne se distingue pas d'une vraie dégradation.
+		printf '  --- fin du log du rejeu final (%s) ---\n' "$(git status --short -- webapp/src | wc -l) fichier(s) modifié(s) sous webapp/src"
+		grep -E 'FAIL|Error|×|✗|Test Files|Tests ' "$TRAVAIL/final.log" | head -30 || true
+		tail -15 "$TRAVAIL/final.log" || true
 	fi
 fi
 
