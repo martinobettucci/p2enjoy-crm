@@ -42808,3 +42808,22 @@ jusqu'à ces réponses ; la spécification se met à jour avant lui.
 ### décision 1008 — Lot G (harnais et seed) : le diagnostic et le plan, avant le code (`INC-355`, `INC-339`, `INC-298`, `INC-312`)
 
 *2026-11-26, session `p2enjoy-crm-dd`, confié par la session de livraison pendant son gel ; lecture des sources et du journal de la campagne, aucune pile.* **Établi** : `INC-312` — le premier délai de reprise du worker (60 s) égale l'attente du seed (60 s) ; `INC-298` — même signature qu'`INC-366` (le catch-all de Kong sert Studio avant `/rest/v1/`), atténuée ; `INC-339` point 3 — le contrôle des jetons ne voyait pas une fonction qui reconstruit, définie avant les jetons ; `INC-355` — les cinq politiques et leurs buckets sont connus. **Décidé** : les règles de `docs/SPEC-test-harness.md` §3.20. **Non décidé, au responsable** : `INC-339` point 4 (`0106`, `0125`, `0132` figées par leur empreinte : exempter de la preuve de rejeu, ou une migration nouvelle). **Rejeté** : relancer le seed dans le seed (masquerait le délai) ; réécrire une migration appliquée en production. **Code** : après la livraison, sous verrou, une preuve par point.
+
+### décision 1009 — `CRM-130` : les six réponses du responsable (§13 de `docs/SPEC-couloirs.md`), et les migrations 0106, 0125 et 0132 (`INC-339` (4))
+
+*2026-11-26, réponses du responsable recueillies par la session de livraison (4522fa9c, p2enjoy-crm-11), sur les questions de
+la décision 1007 (dd) et de la décision 1008 (dd). Toutes les recommandations de dd sont retenues pour CRM-130 ; pour les
+migrations, le responsable choisit l'autre voie.*
+1. **Import d'un couloir manuel en conflit** : l'import est **refusé**, et le message nomme le nombre d'affaires en conflit.
+2. **Replier ou déplier pour tout le monde** : qui écrit les affaires du channel ; un lecteur déplie pour sa seule session.
+3. **Créer ou modifier un couloir de portée channel** : l'administratrice, ou qui écrit les affaires du channel ; les portées
+   track et espace restent réservées à l'administratrice.
+4. **Une affaire « froide »** : le temps depuis son dernier événement (`card_events`), à défaut depuis sa création.
+5. **Supprimer un couloir général utilisé ailleurs** : l'administratrice seule, après une confirmation qui nomme le nombre de
+   channels qui l'emploient.
+6. **Visibilité** : un couloir ne change rien à ce que le board montre (sommeil, archive et corbeille inchangés).
+7. **Les migrations 0106, 0125 et 0132** (appliquées en production, figées par leur empreinte, décision 865), qui ne convergent
+   pas au rejeu de `verify-migrations.sh` : **une migration NOUVELLE pose ce qui leur manque**, pour que le rejeu converge de
+   nouveau — et non l'exemption nommée que recommandait dd. Les trois fichiers ne sont pas réécrits.
+**Conséquences** : `docs/SPEC-couloirs.md` §13 se clôt sur ces réponses (dd) ; le code de CRM-130 est débloqué. INC-339 (4)
+se spécifie comme une migration nouvelle (numéro pris à la synchronisation), avec son entrée au contrat de déploiement.
