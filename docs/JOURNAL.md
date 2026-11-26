@@ -42701,6 +42701,11 @@ entrées à `pg_restore --list`).
 fenêtre a livré `66a7bb3a` : migrations 203, 204 et 206 (registre à 203), webapp bâtie dans la cellule (`index-dPS-0TXh.js`),
 image `mcp` reconstruite (saine), manuel publié (608 fichiers) ; `verifier.sh --revision` 35/36 (le redémarrage unique de
 `realtime`, antérieur à la fenêtre, INC-277). Contrat §2.81 à §2.86 et §8, changelog, backlog à jour ; le constat du responsable reste à faire.
+**Rectification** (2026-11-26, sur l'aveu de dd) : les unitaires verts (282 fichiers / 6497 tests) ont été mesurés à `d68c71d0`,
+non à la révision livrée `66a7bb3a`. Le message d'échec ajouté par INC-372 contenait « docker pull », que le garde d'INC-367
+(`scripts-bornes.test.ts`) refuse : `npm run test:unit` était rouge à `66a7bb3a` sur ce seul contrôle de sources de l'outillage,
+sans effet sur le produit livré (le script `prebuild` et son message ne tournent pas en production). Corrigé par dd en `f0790ef3`.
+Leçon retenue par la session de livraison : rejouer types et unitaires à la révision exacte livrée, après tout correctif de dernière minute.
 
 ### `INC-370` et `INC-368` — fermeture
 
