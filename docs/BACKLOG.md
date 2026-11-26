@@ -21159,3 +21159,10 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 *La garde `prebuild` d'INC-177 casse le build de la livraison (`node:24-alpine`, sans bash). Spécification : `docs/SPEC-test-harness.md` §3.19 ; fiche INC-372. Connecteur MCP : sans objet.*
 
 - [x] **INC-372 — le script `prebuild` ne lance la garde que si `bash` existe** ; `verify-campagne.sh` joue `npm run prebuild` dans `node:24-alpine` : rouge avant, vert après.
+
+## Tri — lot des intermittents d'interface (INC-310 et fiches liées ; demandé par la session de livraison, 2026-11-26)
+
+*Chaque fiche est rejouée sous verrou de campagne, en série ; ce qui ne reproduit plus est clos avec sa preuve et sa cause probable ; ce qui reproduit est corrigé à la cause (test rouge avant, jamais l'assertion) ; ce qui exige un arbitrage est remonté à la session de livraison. Fiches : `docs/INCONSISTENCY_REPORT.md`. Connecteur MCP : sans objet.*
+
+- [@] **Fiches du lot** : INC-310 (fiche mère), INC-235, INC-232, INC-225, INC-305, INC-300, INC-284, INC-287, INC-224, INC-236, INC-227, INC-219, INC-237.
+  *Prise en charge : session interactive 4891a451 (p2enjoy-crm-7a) depuis 2026-11-26 05:17 UTC — état avant : [ ] ; confiée par la session de livraison (11)*
