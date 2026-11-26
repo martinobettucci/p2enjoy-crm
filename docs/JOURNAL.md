@@ -42708,3 +42708,32 @@ entrées à `pg_restore --list`).
 ### `INC-372` — fermeture
 
 *2026-11-26, session `p2enjoy-crm-dd`.* **Vérifié** : `verify-campagne.sh` 48 contrôles sans anomalie (rouge avant : code 127 dans `node:24-alpine` ; vert après) ; la garde du poste refuse toujours un build sous campagne. **Limite** : `npm ci` + `npm run build` complets dans la cellule non rejoués ici (réseau, durée) ; la relivraison les éprouve. **Leçon** : un script de `package.json` s'exécute dans tout environnement qui lance `npm run` — ce qui est une affaire du poste ne doit pas supposer le poste.
+
+### décision 1004 — `INC-286` lot 1 : le connecteur MCP en anglais, spécifié avant le code (`docs/SPEC-mcp.md` §19)
+
+*2026-11-26, session d5b44a2d (p2enjoy-crm-30), sur l'arbitrage du responsable (décision 992 : lancer le lot 1 du plan
+maintenant ; les autres lots plus tard) et la consigne de la session de livraison (11) de préparer la spécification pendant
+sa livraison, sans rien pousser de `webapp/`, `supabase/` ni `mcp/`.*
+**Problème.** Le plan d'`INC-286` (lot 1) nomme les objets du connecteur à renommer, sans en fixer les noms ni les
+modalités. Relevé fait dans les migrations `0090`, `0093`, `0094`, `0095`, `0101`, `0115`, `0129`, `0143`, le service `mcp/` et la webapp.
+**Observations.** (1) La liste du plan est complète pour les tables et les colonnes, mais **`erreur`**, valeur de l'issue,
+est française et n'y figurait pas : ajoutée (`error`). (2) **`mcp_journal` est tenue en ajout seul par déclencheur**
+(`0115`) : convertir ses issues exige de désactiver ses déclencheurs le temps de la transaction. (3) Les **clés JSON** des
+réponses (`droits`, `nom`, `espaces_ouverts`…) et les **noms des paramètres** (`p_famille`, `p_droits`, `p_issue`…) sont du
+contrat exposé : ils suivent (règle 3). (4) Une fonction ne renomme ni ses paramètres ni ses colonnes de retour par
+`create or replace` : `drop` puis `create`. (5) `alter … rename` ne suit pas les références **par nom** dans des corps
+de fonction : le relevé se fait au catalogue. (6) `mcp_prompts` et `connector_instructions` sont déjà conformes.
+**Décisions.** Tables `mcp_accounts`, `mcp_grants`, `mcp_calls` ; familles `affaires`→`cards`, `recettes`→`revenues`,
+`temps`→`time`, `objectifs`→`goals`, `messagerie`→`mail` (les autres inchangées), actions `read`, `create`, `update`,
+`delete`, issues `ok`, `matrix_denied`, `crm_denied`, `error`, `too_large` ; huit fonctions `mcp_is_allowed`,
+`mcp_register_account`, `mcp_account_state`, `mcp_log_call`, `mcp_list_accounts`, `mcp_account`, `mcp_set_grants`,
+`mcp_list_calls` ; **aucun alias** ; **une migration, une transaction, une conversion des valeurs (bijection)**, une
+migration inverse non appliquée au contrat ; **les codes d'erreur et le geste `mcp_droits_poses` restent** (lots 7 et 2) ;
+**une seule poussée** pour la base, le service, la webapp, le seed, les tests et les documents, et **répétition sur une copie
+jetable** de la base de développement (`scripts/restore-drill.sh`), jamais sur la base partagée, avant une fenêtre annoncée
+et le verrou de campagne. **Connecteur MCP** : c'est le connecteur lui-même ; les deux questions ne se posent pas.
+**`CLAUDE.md`** : sa consigne cite des familles françaises ; sa réécriture est soumise au responsable, jamais faite par une
+session sans son accord.
+**Conséquences.** Unité `INC-286` lot 1 (« Lot E » du backlog) `[@]`, spécification §19, trois tranches ; rien n'est poussé de
+`webapp/`, `supabase/`, `mcp/` avant l'annonce de fin de livraison de la session 11.
+**Vérifications.** Aucune : documents seuls.

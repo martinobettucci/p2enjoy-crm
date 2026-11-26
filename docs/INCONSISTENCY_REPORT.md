@@ -7653,6 +7653,8 @@ que par le seul type de la clé.
 
 **Arbitrée le 2026-11-25 (décision 992)** : lancer le lot 1 du plan maintenant (le connecteur MCP : tables mcp_*, familles, colonnes) ; les autres lots plus tard ; écarté : tout différer.
 
+**Lot 1 spécifié le 2026-11-26 (décision 1004)** : `docs/SPEC-mcp.md` §19 fixe les noms, la conversion des valeurs, la migration, les preuves et les tranches. Le relevé a ajouté à la liste du plan l'issue `erreur` (→ `error`), les clés JSON et les paramètres des huit fonctions ; il a retenu hors du lot les codes d'erreur (lot 7) et le geste `mcp_droits_poses` (lot 2).
+
 *Relevé le 2026-10-24 par la session des rattachements multiples, à la demande du responsable (décision 657, arbitrage
 4), en inventoriant le catalogue de la base locale.* **Règle écrite.** `docs/SCHEMA.md`, « Conventions générales » :
 « Les noms de colonnes sont en anglais, les libellés destinés aux utilisateurs sont des données. » Aucune règle n'est

@@ -2019,3 +2019,202 @@ la dernière modification, le rappel « ni donnée personnelle ni secret », et 
 | **T1** | La migration `0200` : la table, les quatre fonctions, le geste du journal ; pgTAP ; API ; `docs/SCHEMA.md` ; contrat |
 | **T2** | Le service `mcp` : l'assemblage, le middleware, la publication du socle ; pytest ; intégration ; l'image `mcp` au contrat |
 | **T3** | L'écran (§5.114), le journal de la plateforme traduit, le seed §56, le manuel, le contrat ; l'unité passe `[P]` |
+
+---
+
+## 19. Le connecteur en anglais — `INC-286` lot 1 (décisions 658, 992 et 1004)
+
+*Écrite le 2026-11-26 **avant la première ligne de code** (`CLAUDE.md` §5 ; décision 1004). Unité de backlog : `docs/BACKLOG.md`
+« Lot E — `INC-286` lot 1 ». Plan d'origine : `docs/INCONSISTENCY_REPORT.md` `INC-286`, lot 1. Règles de nommage :
+`docs/DAT.md` §12 bis, règles 1 à 6 et 8. Schéma : `docs/SCHEMA.md` §9 quinquies.*
+
+### 19.1 Ce que l'unité fait, et ce qu'elle ne fait pas
+
+**Elle fait.** Elle renomme **tout ce que le connecteur stocke ou expose en français** : les trois tables du registre, leurs
+colonnes, leurs index, contraintes et déclencheurs ; les huit fonctions `mcp_*` en français, leurs paramètres et les clés
+JSON de leurs réponses ; les valeurs de la liste fermée des familles, des actions et des issues. Les droits déjà accordés
+et les lignes déjà journalisées sont **convertis**, jamais révoqués ni perdus. La webapp, le service `mcp`, le seed, les
+tests, le manuel et les documents suivent **dans le même changement** (décision 658, règle 10 : directement, sans alias).
+
+**Elle ne fait pas.**
+- Aucune fonctionnalité nouvelle, aucun outil ajouté ni retiré, aucune famille ajoutée : **les dix familles restent
+  dix** ; les noms des outils (`crm_card_move`…) ne changent pas, ils sont déjà en anglais.
+- **Les codes d'erreur** (`famille_inconnue`, `action_inconnue`, `droit_invalide`, `issue_invalide`, `profil_introuvable`,
+  `sub_requis`, `adresse_invalide`) restent : ils sont le lot 7 du plan, avec la table de traduction de la webapp.
+- **Le geste `mcp_droits_poses` de `plateforme_journal` et les clés de son détail** (`nom`, `espace`, `avant`, `apres`)
+  restent : ils sont le lot 2 (« Plateforme »). La valeur est une donnée stockée de `plateforme_journal`, pas du registre.
+- **La table `mcp_prompts`, et `connector_instructions`** sont déjà conformes (migrations `0185` et `0200`).
+- **Le code français** qui emploie ces contrats : identifiants du service Python, de la webapp, des scripts et des tests
+  (`FAMILLES`, `EtatCompte.droits`, `FAMILLES_MCP`, `lireComptesMcp`…) **gardent leur nom français** (règle 9) ; seules
+  changent les **valeurs** et les **chaînes de contrat** qu'ils portent.
+
+**Connecteur MCP** (`CLAUDE.md`, « Toute fonctionnalité pose la question du connecteur MCP ») : c'est le connecteur lui-même
+qu'on renomme. Les deux questions ne se posent pas : aucune fonctionnalité nouvelle, aucune famille nouvelle.
+
+### 19.2 Les correspondances
+
+**Tables** (règle 1 : pluriel, préfixées par l'objet parent) :
+
+| Avant | Après | Contenu |
+|---|---|---|
+| `mcp_comptes` | `mcp_accounts` | les comptes vérifiés qui se sont connectés |
+| `mcp_droits` | `mcp_grants` | la matrice : une ligne par case accordée |
+| `mcp_journal` | `mcp_calls` | un appel d'outil par ligne, sans argument |
+
+**Colonnes** (règle 2 ; une notion garde un seul nom) :
+
+| Table | Avant | Après |
+|---|---|---|
+| `mcp_accounts` | `nom` | `name` |
+| | `premiere_connexion` | `first_connected_at` |
+| | `derniere_activite` | `last_active_at` |
+| `mcp_grants` | `famille` | `family` |
+| | `accorde_par` | `granted_by` |
+| | `accorde_le` | `granted_at` |
+| `mcp_calls` | `outil` | `tool` |
+| | `issue` | `outcome` |
+| | `duree_ms` | `duration_ms` |
+| | `cree_le` | `created_at` |
+
+`sub`, `email`, `workspace_id`, `action`, `id` sont déjà conformes. Les index, contraintes, clés étrangères et
+déclencheurs prennent le nom de leur table : `mcp_grants_by_workspace`, `mcp_grants_family_check`,
+`mcp_grants_action_check`, `mcp_calls_recent`, `mcp_calls_by_account`, `mcp_calls_outcome_check`,
+`mcp_calls_duration_check`, `mcp_calls_tool_check`, `mcp_accounts_email_form`, `mcp_accounts_name_bounded`,
+`mcp_calls_refuse_change`, `mcp_calls_refuse_truncate`.
+
+**Valeurs** (règle 6) :
+
+| Colonne | Avant → Après |
+|---|---|
+| `mcp_grants.family` | `structure` → `structure` ; `workflows` → `workflows` ; `affaires` → `cards` ; `contacts` → `contacts` ; `organizations` → `organizations` ; `budgets` → `budgets` ; `recettes` → `revenues` ; `temps` → `time` ; `objectifs` → `goals` ; `messagerie` → `mail` |
+| `mcp_grants.action` | `consulter` → `read` ; `ajouter` → `create` ; `modifier` → `update` ; `supprimer` → `delete` |
+| `mcp_calls.outcome` | `ok` → `ok` ; `refus_matrice` → `matrix_denied` ; `refus_crm` → `crm_denied` ; `erreur` → `error` ; `trop_volumineux` → `too_large` |
+
+L'ordre des familles de la matrice (§6.1) et celui des actions ne changent pas : l'ordre des tableaux de `mcp_account` et
+`mcp_set_grants` reste celui de la liste.
+
+**Fonctions publiques** (règle 3 : un geste `<verbe>_<objet>`, une lecture par ce qu'elle rend) — paramètres et clés de la
+réponse comprises :
+
+| Avant | Après | Paramètres | Clés de la réponse |
+|---|---|---|---|
+| `mcp_autorise(p_ws, p_famille, p_action)` | `mcp_is_allowed(p_ws, p_family, p_action)` | `p_famille` → `p_family` | booléen |
+| `mcp_inscrire_compte(p_sub, p_email, p_nom, p_superadmins_initiaux, p_admin_lelabs)` | `mcp_register_account(p_sub, p_email, p_name, p_initial_superadmins, p_admin_lelabs)` | `p_nom` → `p_name` ; `p_superadmins_initiaux` → `p_initial_superadmins` | `droits` → `grants` (nombre) ; `superadmin` inchangée |
+| `mcp_etat_compte(p_sub, p_admin_lelabs)` | `mcp_account_state(p_sub, p_admin_lelabs)` | — | `droits` → `grants` ; chaque case : `workspace_id`, `family`, `action` ; `superadmin` |
+| `mcp_journaliser(p_sub, p_outil, p_ws, p_issue, p_duree_ms)` | `mcp_log_call(p_sub, p_tool, p_ws, p_outcome, p_duration_ms)` | `p_outil` → `p_tool` ; `p_issue` → `p_outcome` ; `p_duree_ms` → `p_duration_ms` | — |
+| `mcp_comptes_liste(p_limite)` | `mcp_list_accounts(p_limit)` | `p_limite` → `p_limit` | `nom` → `name` ; `premiere_connexion` → `first_connected_at` ; `derniere_activite` → `last_active_at` ; `espaces_ouverts` → `open_workspaces` ; `avec_profil` → `has_profile` |
+| `mcp_compte(p_sub)` | `mcp_account(p_sub)` | — | `nom` → `name` ; `avec_profil` → `has_profile` ; `connecte` → `is_connected` ; `premiere_connexion` → `first_connected_at` ; `derniere_activite` → `last_active_at` ; `espaces` → `workspaces` (`slug`, `nom` → `name`, `role`, `droits` → `grants`) |
+| `mcp_poser_droits(p_sub, p_ws, p_droits)` | `mcp_set_grants(p_sub, p_ws, p_grants)` | `p_droits` → `p_grants` | — |
+| `mcp_journal_liste(p_sub, p_issue, p_avant, p_limite)` | `mcp_list_calls(p_sub, p_outcome, p_before, p_limit)` | `p_issue` → `p_outcome` ; `p_avant` → `p_before` ; `p_limite` → `p_limit` | `nom` → `name` ; `outil` → `tool` ; `espace_nom` → `workspace_name` ; `issue` → `outcome` ; `duree_ms` → `duration_ms` ; `cree_le` → `created_at` |
+
+Les fonctions **ne gardent pas leur ancien nom** : aucun alias (décision 658, règle 10 ; aucun client externe n'appelle
+PostgREST). Leurs privilèges sont repris à l'identique : `mcp_is_allowed` et les quatre fonctions d'administration à
+`authenticated`, `mcp_register_account`, `mcp_account_state` et `mcp_log_call` à la seule clé de service.
+
+**Autres objets qui lisent le registre**, repris par `create or replace` à l'identique, la référence seule changeant : la
+fonction qui rend le dernier appel d'un utilisateur de la plateforme (`0093`, colonne `derniere_activite` de
+`mcp_comptes`) et la purge des journaux (`0115`, `mcp_journal.cree_le`). Leur liste **exacte** se relève dans le
+catalogue avant d'écrire la migration (§19.3, point 6) ; la clé de réponse `connecteur_derniere_activite` de la première
+est celle d'une fonction `plateforme_*` : elle reste (lot 2).
+
+### 19.3 La migration
+
+Une migration ordinaire, **un seul fichier, une seule transaction**, au prochain numéro libre **après synchronisation**
+(`docs/DAT.md` §3.2 bis). Ordre :
+
+1. **Relevé et garde** : compter les lignes de `mcp_accounts`, de `mcp_grants` par (famille, action) et de `mcp_calls` par
+   issue ; lever si une valeur sort des listes fermées actuelles (une case d'un état que la contrainte aurait dû refuser
+   ne peut pas être convertie en silence).
+2. **Retirer les trois contraintes `check` de valeurs** (famille, action, issue), puis `alter table … rename` pour les tables, les
+   colonnes, les index, les contraintes restantes et les déclencheurs.
+3. **Convertir les valeurs** de `mcp_grants` (`update`, cases confondues, sans collision possible : le renommage est une
+   bijection) et de `mcp_calls`. **`mcp_calls` est tenue en ajout seul par déclencheur** (`0115`) : la conversion
+   désactive ses deux déclencheurs (`alter table … disable trigger`), met à jour **uniquement** `outcome`, et les rétablit
+   dans la même transaction ; la migration compare ensuite le nombre de lignes avant et après (égal) et ne laisse
+   passer aucun ancien code. C'est la **seule** écriture permise sur le journal, un renommage de libellé sans changement
+   de ligne ; elle est consignée au journal de la décision et au contrat de déploiement.
+4. **Reposer les trois contraintes** `check` avec les valeurs nouvelles (liste fermée, §6.1), dans la même transaction que la
+   conversion : aucun instant où une valeur ancienne ou nouvelle manque de contrainte.
+5. **Remplacer les huit fonctions** : `drop function` de l'ancien nom puis `create function` du nouveau (un paramètre ou une
+   colonne de retour ne se renomme pas par `create or replace`), mêmes propriétaire (`postgres`), `security definer`,
+   `search_path` vide, privilèges (`revoke … from public, anon, authenticated` puis `grant` au rôle voulu).
+6. **Reprendre toute fonction ou vue dont le corps cite un ancien nom** : le relevé se fait au catalogue,
+   `pg_proc.prosrc ~ '\m(mcp_comptes|mcp_droits|mcp_journal|mcp_autorise|mcp_compte|…)\M'`, avant d'écrire la
+   migration ; une référence par nom n'est pas suivie par `alter … rename`, elle casserait à l'exécution.
+7. **Commentaires** (`comment on`) des tables, citant `INC-286` et cette section.
+8. **`-- sans effet de types`** n'est pas permis : la migration porte les types, `webapp/src/lib/database.types.ts` est régénéré
+   et son test de types (`database.types.test-d.ts`) suit (garde INC-165).
+
+**Retour arrière** : une migration inverse, écrite **avec** la migration, **non appliquée** et gardée dans
+`docs/PROD_MIGRATIONS.md` (même ordre, correspondances renversées) ; la conversion des valeurs est une bijection, rien
+n'est perdu. Elle suppose que le service `mcp` et la webapp précédents sont redéployés avec elle. **Sauvegarde** de la base
+avant l'application en production (`CLAUDE.md` §9, §12).
+
+### 19.4 Le service `mcp`, la webapp, le seed
+
+- **`mcp/crm_mcp/politique.py`** : `FAMILLES` et `ACTIONS` portent les valeurs nouvelles ; les ~140 déclarations d'outils
+  (`famille="affaires"` → `famille="cards"`, `action="consulter"` → `action="read"`…) suivent. Le journal d'appel
+  (`audit.py`) écrit les issues nouvelles ; `registre.py` appelle les fonctions nouvelles avec les paramètres et lit les clés
+  nouvelles. Le texte d'instructions donné aux assistants (`application.py`) cite les familles et actions **nouvelles**.
+- **Webapp** : `plateforme.ts` (listes `FAMILLES_MCP`, `ACTIONS_MCP`, `ISSUES_MCP`, lecteurs des RPC, clés lues),
+  `presentation-plateforme.ts` et `fr.ts` (les clés i18n suivent la valeur : `platform.mcp.family.cards`,
+  `platform.mcp.action.read`, `platform.mcp.outcome.matrix_denied`) ; **les libellés affichés ne changent pas** : l'écran
+  « Connecteur MCP » est identique à l'œil.
+- **Seed** : `supabase/seed/apply-seed.sh` appelle `mcp_set_grants` avec les valeurs nouvelles ; le jeu de `docs/SPEC-seed.md`
+  §21.4 et ses états (Camille `revenues:read` seule, etc.) sont inchangés en substance.
+- **Tests, scripts, documents** : pgTAP `0085`, `0084`, `0087`, `0092`, `0111`, `0120` ; `scripts/verify-mcp.sh` ; E2E
+  `connecteur-*.spec.ts`, `plateforme-mcp.spec.ts`, `connecteur-administration.spec.ts` ; pytest `mcp/tests` ; types générés ;
+  `docs/SPEC-mcp.md` §6.1, §6.3, §7, §8.2, §9.2 et §11, `docs/SCHEMA.md` §9 quinquies, `docs/DAT.md`, `docs/SPEC-seed.md`,
+  `docs/SPEC-plateforme.md`, `docs/SPEC-permissions-rls.md`, les spécifications de famille (`SPEC-recettes`, `SPEC-organisations`…) qui
+  citent une famille, `CHANGELOG.md`. L'historique (`JOURNAL.md`, entrées de `BACKLOG.md` et de `INCONSISTENCY_REPORT.md`)
+  **n'est pas réécrit** : il garde la langue de son époque.
+- **`CLAUDE.md`** (« Spécificités du projet », la consigne du connecteur) cite « `recettes` », « `budgets` », `docs/SPEC-mcp.md`
+  §6.1 : sa réécriture en anglais est **soumise au responsable** avec le lot ; **le fichier n'est pas modifié par la session
+  qui porte l'unité sans son accord**.
+
+### 19.5 Mise en œuvre sans casser la pile partagée
+
+Base, `mcp`, webapp et seed se livrent **ensemble** (règle 10). Conséquence pour le travail en commun : une migration
+appliquée à la base de développement partagée casse, pour toutes les sessions, tout ce qui n'a pas encore le code nouveau.
+Donc :
+- **la répétition se fait sur une copie jetable** de la base (`scripts/restore-drill.sh`, une base restaurée d'une
+  sauvegarde du développement), jamais sur la base partagée : migration, conversion, pgTAP, types, API du registre ;
+- **une seule poussée** pour la migration, le service, la webapp, le seed, les tests et les documents, après toutes les preuves
+  de la copie ; aucune tranche poussée seule ;
+- **l'application à la base partagée et la reconstruction de l'image `mcp`** se font dans une fenêtre annoncée aux sessions et
+  sous le verrou de campagne, par la session qui porte l'unité, et **après** que la session de livraison l'a permis ;
+- la livraison en production est un geste de la session de livraison : migration, image `mcp`, webapp, dans la même
+  fenêtre, sur instruction du responsable (`docs/PROD_MIGRATIONS.md`).
+
+### 19.6 Preuves
+
+- **pgTAP** (nouveau fichier, `@verifies` `INC-286` lot 1) : les trois tables et leurs colonnes nouvelles ; **aucun ancien nom**
+  (`to_regclass`, `pg_proc`, `information_schema.columns`, et le corps d'aucune fonction ne cite un ancien nom) ; les contraintes
+  de famille, d'action et d'issue **refusent** une valeur ancienne et acceptent la nouvelle ; la matrice se lit à travers
+  `mcp_is_allowed` avec les valeurs nouvelles, le refus d'une ancienne valeur levant `22023` ; les privilèges des huit
+  fonctions (aucun accès pour `anon`, `authenticated` seulement où l'ancienne le permettait) ; le journal reste en ajout seul
+  (`update` et `delete` refusés) et accepte `mcp_log_call` avec les issues nouvelles ; les fichiers pgTAP existants du
+  connecteur, mis à jour, restent verts.
+- **Preuve de la conversion**, sur la **copie jetable** où l'on a posé avant la migration des droits et des lignes de journal
+  de **toutes** les valeurs anciennes : les comptes par valeur après la migration égalent ceux d'avant, via la table de
+  correspondance ; aucun droit révoqué ; aucune ligne de journal perdue ; le relevé avant/après est consigné à
+  `docs/JOURNAL.md`.
+- **API** (`e2e/api`) : l'administration du connecteur par requête directe, avec les noms nouveaux ; **les anciens noms de
+  fonction répondent 404**, et un compte non superadministrateur est refusé comme avant (`CLAUDE.md` §10).
+- **pytest** unitaires et d'intégration du service (`mcp/tests`), avec un vrai client MCP contre la base : la matrice appliquée à la
+  visibilité et à chaque appel avec les valeurs nouvelles, une issue de chaque sorte écrite au journal.
+- **Vitest** de `plateforme.ts` et de la présentation ; types générés propres.
+- **E2E** souris et clavier : l'onglet « Connecteur MCP » (matrice, comptes, journal et son filtre par issue), le parcours d'un
+  compte superadministrateur, un compte « droits en attente » ; quatre paliers ; captures **observées** (l'apparence est
+  inchangée : elles le montrent) ; `verify-mcp.sh`.
+- **Rouge avant** : chaque test de nom ou de valeur nouveaux est écrit **avant** la migration et rouge contre l'ancien état.
+
+### 19.7 Tranches
+
+| Tranche | Contenu |
+|---|---|
+| **T1** | La migration (§19.3) et son inverse ; pgTAP ; la preuve de conversion sur la copie jetable ; types générés ; `docs/SCHEMA.md` |
+| **T2** | Le service `mcp` : politique, registre, audit, instructions ; les tests pytest et d'intégration |
+| **T3** | La webapp, le seed, les E2E et captures, `verify-mcp.sh`, les documents (§19.4), le contrat `docs/PROD_MIGRATIONS.md` ; l'unité passe `[P]` |
+
+**Une seule poussée** pour T1 à T3 (§19.5) ; le découpage ordonne le travail, pas les commits poussés.
