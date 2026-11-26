@@ -42704,3 +42704,7 @@ entrées à `pg_restore --list`).
 ### `INC-372` — la garde du build casse la livraison
 
 *2026-11-26, session `p2enjoy-crm-dd`, urgence de la session de livraison.* **Observation** : `livrer.sh --revision 67eb7d6e` interrompu au build de la cellule : `env: can't execute 'bash'`. **Reproduit** dans `node:24-alpine` : code 127. **Cause** : la garde `prebuild` (INC-177) est un script bash, lancée là où il n'y a ni bash ni verrou. **Décision** : la garde est une affaire du poste ; `prebuild` ne la lance que si bash existe. **Rejeté** : réécrire la garde en `sh` (elle emploie `/dev/tcp`, `pgrep`, des tableaux : bash). **Rouge avant** : code 127 dans l'image ; vert après à consigner.
+
+### `INC-372` — fermeture
+
+*2026-11-26, session `p2enjoy-crm-dd`.* **Vérifié** : `verify-campagne.sh` 48 contrôles sans anomalie (rouge avant : code 127 dans `node:24-alpine` ; vert après) ; la garde du poste refuse toujours un build sous campagne. **Limite** : `npm ci` + `npm run build` complets dans la cellule non rejoués ici (réseau, durée) ; la relivraison les éprouve. **Leçon** : un script de `package.json` s'exécute dans tout environnement qui lance `npm run` — ce qui est une affaire du poste ne doit pas supposer le poste.

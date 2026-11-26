@@ -21154,4 +21154,4 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 *La garde `prebuild` d'INC-177 casse le build de la livraison (`node:24-alpine`, sans bash). Spécification : `docs/SPEC-test-harness.md` §3.19 ; fiche INC-372. Connecteur MCP : sans objet.*
 
-- [ ] **INC-372 — le script `prebuild` ne lance la garde que si `bash` existe** ; `verify-campagne.sh` joue `npm run prebuild` dans `node:24-alpine` : rouge avant, vert après.
+- [x] **INC-372 — le script `prebuild` ne lance la garde que si `bash` existe** ; `verify-campagne.sh` joue `npm run prebuild` dans `node:24-alpine` : rouge avant, vert après.

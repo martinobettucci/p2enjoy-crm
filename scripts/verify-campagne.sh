@@ -6,6 +6,8 @@
 # @verifies docs/SPEC-test-harness.md §3.9 ; docs/INCONSISTENCY_REPORT.md INC-177 ; docs/JOURNAL.md décision 990
 # @verifies INC-367 (docs/BACKLOG.md « Correctif — INC-367 ») — le verrou a une durée maximale (a) et `borner` nomme un dépassement (b) :
 #           docs/SPEC-test-harness.md §3.16 ; docs/INCONSISTENCY_REPORT.md INC-367
+# @verifies INC-372 (docs/BACKLOG.md « Correctif — INC-372 ») — la garde du build est une affaire du poste : le script `prebuild` passe dans `node:24-alpine` (sans bash)
+#           et refuse toujours un build sur le poste pendant qu'un aperçu est servi sous campagne : docs/SPEC-test-harness.md §3.19 ; docs/INCONSISTENCY_REPORT.md INC-372
 #
 # Éprouve `scripts/lib/campagne.sh` sans pile : le verrou de CE harnais vit dans un répertoire jetable
 # (`CAMPAGNE_REPERTOIRE`), jamais dans celui d'une vraie campagne qu'il ne doit pas gêner. Les commandes réelles gardées
@@ -103,6 +105,25 @@ fi
 
 sortie=$(CAMPAGNE_PORT_APERCU=1 "$CAMPAGNE" garde-build 2>&1); code=$?
 [ "$code" = 0 ] && ok "un build n'est pas gardé tant que le port d'aperçu n'écoute pas" || fail "garde-build refuse sans port d'aperçu (code $code)"
+
+# INC-372 (docs/SPEC-test-harness.md §3.19) : la garde du build est une affaire du POSTE. Sur le poste, un aperçu servi sous un verrou vivant fait refuser
+# `npm run build` (script `prebuild`) ; dans l'image de la livraison (`node:24-alpine`, sans bash), le même script passe sans garde.
+python3 -c "import socket,time; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1); s.bind(('127.0.0.1', 0)); s.listen(); print(s.getsockname()[1], flush=True); time.sleep(20)" > "$TRAVAIL/ecouteur.port" &
+ECOUTEUR=$!
+for _ in $(seq 1 25); do [ -s "$TRAVAIL/ecouteur.port" ] && break; sleep 0.2; done
+PORT_ECOUTE=$(cat "$TRAVAIL/ecouteur.port" 2>/dev/null)
+sortie=$(CAMPAGNE_PORT_APERCU="$PORT_ECOUTE" npm run --silent prebuild 2>&1); code=$?
+[ "$code" != 0 ] && printf '%s' "$sortie" | grep -q 'campagne-A' \
+	&& ok "sur le poste, le script prebuild refuse un build pendant qu'un aperçu est servi sous campagne, et nomme le détenteur" \
+	|| fail "le script prebuild ne garde plus le build sur le poste (code $code) : « $(printf '%s' "$sortie" | head -2 | tr '\n' ' ') »"
+kill "$ECOUTEUR" 2>/dev/null; wait "$ECOUTEUR" 2>/dev/null
+if docker image inspect node:24-alpine >/dev/null 2>&1; then
+	sortie=$(docker run --rm -v "$PWD":/src:ro -w /src node:24-alpine sh -c 'npm run --silent prebuild' 2>&1); code=$?
+	[ "$code" = 0 ] && ok "dans node:24-alpine (l'image de la livraison, sans bash), le script prebuild passe : la garde est une affaire du poste" \
+		|| fail "le script prebuild casse le build dans node:24-alpine (code $code) : « $(printf '%s' "$sortie" | head -2 | tr '\n' ' ') »"
+else
+	fail "l'image node:24-alpine est absente : docker pull node:24-alpine, puis rejouer (la preuve INC-372 ne peut pas être jouée)"
+fi
 
 titre "4. Le jeton traverse"
 sortie=$(CAMPAGNE_REPERTOIRE="$CAMPAGNE_REPERTOIRE" "$CAMPAGNE" ouvrir --nom imbrique -- true 2>&1); code=$?
