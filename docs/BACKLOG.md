@@ -18792,7 +18792,9 @@ sur un compte sans channel lisible (l'état vide) ; captures aux quatre paliers 
 
 ## Demande du 2026-11-06 — des couloirs (swim lanes) sur le board d'un channel (décision 860)
 
-### CRM-130 — Les couloirs du board d'un channel : par règle ou par sélection, repliables, exclusifs par channel `[ ]`
+### CRM-130 — Les couloirs du board d'un channel : par règle ou par sélection, repliables, exclusifs par channel `[@]`
+
+*Prise en charge : p2enjoy-crm-dd (session interactive 152dd27d) depuis 2026-11-26 09:50 UTC — état avant : [ ] ; la spécification d'abord, aucun code avant elle.*
 *Prise libérée le 2026-11-26 par d5b44a2d (p2enjoy-crm-30), à la demande de la session de livraison : état réel [ ] — décisions 860 à 864 seules (comportement, départage, stockage, import) ; aucune spécification complète, aucun code, aucun test.*
 
 **Origine** : brainstorm du responsable, 2026-11-06 (décision 860).
