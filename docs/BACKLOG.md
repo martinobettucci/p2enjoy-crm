@@ -21003,6 +21003,9 @@ corriger sans arbitrage l'est par lots cohérents, preuve rouge avant et verte a
   `notifications`, `preferences-notifications` et `mentions-composeur` verts (les comptes de Driss à 2 et 3 sont intacts) ; manuel `05-notifications` 5/5. Sous-ensemble du périmètre, pas une campagne complète.
   **Reste, pour le responsable en production** : le geste de la `0206` (contrat `docs/PROD_MIGRATIONS.md` §2.85), puis le constat que le résumé du matin cite une mention d'organisation non lue.
 
+- [@] **Lot G — harnais et seed** (`INC-355`, `INC-339`, `INC-298`, `INC-312`), confié par la session de livraison le 2026-11-26 : `INC-355` `verify-mail-inbox.sh` compte les politiques de `storage.objects` par bucket ; `INC-339` les sous-harnais de `verify-droits-fins.sh` rendent des rouges antérieurs ; `INC-298` le seed d'une reconstruction échoue une fois sur douze ; `INC-312` le seed meurt sur l'envoi de démonstration juste après une reconstruction.
+  *Prise en charge : p2enjoy-crm-dd (session interactive 152dd27d) depuis 2026-11-26 08:20 UTC — état avant : [ ] ; pendant le gel de livraison : lecture, diagnostic sur les journaux, fiches et spécifications ; code et rejeux sous verrou après la livraison.*
+
 ### CRM-166 — Un assistant IA dans l'inbox : il propose un plan d'actions sur les mails sélectionnés, que l'on accepte ou refuse mail par mail `[P]`
 *Prise de d5b44a2d (p2enjoy-crm-30) libérée le 2026-11-26 : T1, T2 et T3 faites et vérifiées en développement (sous-ensembles du périmètre ; la campagne complète est celle de la session de livraison). Reste, pour le responsable en production : le geste du contrat §2.87 (migration `0207`, recréation de `functions`, webapp), puis le constat d'un plan sur le vrai modèle.*
 
