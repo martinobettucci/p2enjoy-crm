@@ -1,6 +1,6 @@
 # Contrat de déploiement — P2Enjoy CRM
 
-*Session de livraison : session interactive 4522fa9c (p2enjoy-crm-11, poste du responsable) depuis 2026-11-25 — rôle durable (décision 830) ; aucun lot en cours : le lot `CRM-161` T3.d à T5 (migrations 0203, 0204, 0206) a été livré le 2026-11-26 à la révision `66a7bb3a`, décision 1003.*
+*Session de livraison : session interactive 4522fa9c (p2enjoy-crm-11, poste du responsable) depuis 2026-11-25 — rôle durable (décision 830) ; lot arrêté à `c9f4f073` depuis 2026-11-26 : la migration 0207, la recréation de `functions`, la webapp et le manuel (`CRM-166` T1 à T3, l'assistant IA de l'inbox ; les correctifs d'interface d'INC-284, INC-287, INC-237 ; l'outillage d'INC-142 c, INC-371, INC-373). Le lot précédent (`66a7bb3a`) a été livré le 2026-11-26, décision 1003.*
 
 Ce document décrit **ce qu'un humain doit appliquer** pour déployer ou mettre à jour la
 production. Il ne dérive jamais de l'état réel du projet : toute modification du schéma, des
