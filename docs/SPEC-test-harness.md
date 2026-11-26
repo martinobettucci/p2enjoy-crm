@@ -472,6 +472,11 @@ la valeur du contrat, avant Docker (`runDev.sh`) et avant toute destruction (`re
 *Écrite le 2026-11-25, avant le code.* **Mesuré** : `verify-cards.sh` 63 min, `verify-colonnes-protegees.sh` 27 min, dont l'essentiel à relancer `e2e:api` et `e2e:ui` ENTIERS sur une base déjà accumulée par la campagne ; le verdict d'une suite entière sur base accumulée ne dit rien de l'unité (INC-246).
 **La règle.** Un harnais d'unité (`verify-cards.sh`, `verify-colonnes-protegees.sh`) prouve l'unité par ses propres sections ; sa section « Suites » rejoue `test:sql`, `test:unit`, `typecheck`, `types:check`, `build`, puis **les seules specs Playwright de l'unité**, nommées en tête de fichier (`SPECS_API_UNITE`, `SPECS_UI_UNITE`, vides pour une unité sans écran). `--suites-completes` rétablit `npm run e2e:api` / `e2e:ui` entiers, pour un jeu isolé sur base fraîche. Le harnais qui a pour objet la suite entière (`verify-harness.sh`) n'est pas concerné : il se joue seul, sur base fraîche, hors de la campagne principale. Connecteur MCP : sans objet.
 
+### 3.18 Un jeton interne gardé ne survit pas à une opération longue — INC-371
+
+*Écrite le 2026-11-26, avant le code.* **Mesuré** (INC-370) : `PGRST303 « JWT expired »` — le jeton interne d'un script vaut 300 s au plus (`scripts/lib/sso.sh`) et un harnais le réemployait après deux reconstructions de la base.
+**La règle.** Un harnais qui garde un jeton obtenu par `sso_jeton_interne` ou `jeton_de` dans une variable du niveau haut le **redemande** après toute opération longue (`reconstruire_base_dev`, `rejouer_*`, `npm run build|e2e*|test:sql`, `playwright test`, construction d'image) avant de le réemployer. **Preuve** : `webapp/src/lib/jetons-harnais.test.ts` lit les harnais et refuse un jeton réemployé après une opération longue sans nouvelle affectation entre les deux ; il ne mesure pas les durées. Connecteur MCP : sans objet.
+
 ## 4. Projets Playwright
 
 ### 4.1 Une seule configuration
