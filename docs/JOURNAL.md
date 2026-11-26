@@ -42674,3 +42674,25 @@ correctifs).
 ### `INC-371` — le contrôle de sources et la correction
 
 *2026-11-26, session `p2enjoy-crm-dd`.* **Rouge avant** : `jetons-harnais.test.ts` nomme `verify-workflows.sh` (`T_BIZDEV` ligne 693, après la reconstruction de la ligne 684) ; il aurait aussi nommé l'ancienne `verify-colonnes-protegees.sh` (`T_ADMIN`, lignes 473 et 484). **Vert après** : 24 tests (4 sur l'analyse, 20 sur les harnais). `verify-workflows.sh` redemande `T_BIZDEV` après sa reconstruction. **Reste** : le rejeu entier de `verify-workflows.sh` sous verrou.
+
+### décision 1003 — livrer le lot CRM-161 T3.d à T5 à la révision `d68c71d0` (migrations 0203, 0204, 0206)
+
+*2026-11-26, session 4522fa9c (p2enjoy-crm-11, session de livraison), sous l'objectif du responsable : livrer chaque lot stable
+sans demander (la production prend des instantanés automatiques ; un `pg_dump` est gardé avant).*
+**Le lot** : `CRM-161` T3.d à T5 (le plafond journalier tous espaces, migration 0203 ; le Pilotage, la saisie et le rapport de
+temps de tous les espaces ; le connecteur ; le manuel), `INC-216` (le fuseau de l'espace, migration 0204, et son écran),
+`INC-361` (les mentions d'organisation du digest, migration 0206), `INC-342`, `INC-318`, `INC-139` b, et l'outillage de preuve
+(`INC-367`, `INC-368`, `INC-369`, `INC-370`, `INC-371`) ; contrat §2.81 et suivants ; verrou `19a489f9`.
+**La campagne** : complète à `411cfe37`, base recréée : types, unitaires, mail 57/57, mcp 133 contrôles, pgTAP 179 fichiers /
+5778 assertions, verify-scripts, rendu des modèles d'e-mails verts ; api 1432/1434 (`demarrage`, vert seul : interférence
+connue) ; ui 1377/1383 et manuel 170/171 — sept scénarios rouges, causes de preuve et non du produit (décision 1002,
+`82c421b7` : la connexion des scénarios attend le repos de la page d'arrivée ; l'aide au clavier attend l'inbox ; l'image de la
+checklist attend la fin du défilement doux) ; `verify-board` rouge au rejeu final, non reproduit (73 contrôles verts rejoués
+seuls, `INC-369` lui fait désormais montrer sa cause). **Rejeu après `82c421b7`**, base remise à zéro : ui 1383/1383, manuel
+171/171, `demarrage` 6/6. **À la révision livrée** : types verts, unitaires 282 fichiers / 6497 tests ; manuel construit, garde
+170 contrôles sans anomalie (les neuf écarts vus sur le manuel régénéré par la campagne viennent des images du rejeu, non du
+manuel committé, qui est rendu tel quel) ; `verify-cards` borné 50 contrôles (dd) ; captures 132 changées, 20 ajoutées,
+observées (Pilotage et saisie de tous les espaces, fuseau, Pilotage à 390 px), committées `d68c71d0`. **Aucun défaut du lot.**
+**Lecture de la production avant** (§2.81 geste 1, lecture seule) : 0 couple personne × jour au-delà de 420 minutes ; registre à
+200 (`0202`) ; un seul espace. **Sauvegarde** : `sauvegardes/avant-0203-20261126T044710Z.dump` dans la cellule (7,3 Mo, 3627
+entrées à `pg_restore --list`).
