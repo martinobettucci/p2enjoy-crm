@@ -21147,4 +21147,4 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 *Recensement des harnais qui gardent un jeton interne de 300 s par-dessus une opération longue. Spécification : `docs/SPEC-test-harness.md` §3.18 ; fiche INC-371. Connecteur MCP : sans objet.*
 
-- [ ] **INC-371 — `verify-workflows.sh` redemande ses jetons après sa reconstruction ; contrôle de sources `jetons-harnais.test.ts`** : rouge avant, vert après ; `verify-workflows.sh` rejoué entier sous verrou.
+- [~] **INC-371 — `verify-workflows.sh` redemande ses jetons après sa reconstruction ; contrôle de sources `jetons-harnais.test.ts`** : rouge avant, vert après ; `verify-workflows.sh` rejoué entier sous verrou.

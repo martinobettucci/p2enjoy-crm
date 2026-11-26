@@ -682,6 +682,9 @@ else
 fi
 
 reconstruire_base_dev || fail "la reconstruction de la base a échoué à la restauration — motif ci-dessus"
+# INC-371 (docs/SPEC-test-harness.md §3.18) : le jeton interne d'un script vaut 300 s au plus ; une reconstruction dure plus longtemps. Les jetons employés
+# plus bas sont redemandés ici, sans quoi l'écriture rendrait 401 « JWT expired » au lieu du 403 attendu.
+T_BIZDEV=$(jeton_de "$MAIL_BIZDEV")
 restaure="$(psql_db -c "select count(*) from public.workflow_transitions where workflow_id = '$WF_SEED';")/$(cles_ajournables)"
 if [ "$restaure" = "11/$CLES_PRODUIT" ]; then
 	ok "restauration constatée : onze transitions revenues, et les trois contraintes de \`0085\` et \`0086\` de nouveau ajournables"

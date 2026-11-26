@@ -42670,3 +42670,7 @@ correctifs).
 ### `INC-371` — recensement des jetons gardés
 
 *2026-11-26, session `p2enjoy-crm-dd`.* **Observation** : INC-370 vient d'un jeton de 300 s réemployé après des reconstructions. **Recensement** : 19 harnais appellent `sso_jeton_interne` ; par analyse statique, deux gardent un jeton par-dessus une opération longue — `verify-colonnes-protegees.sh` (corrigé) et `verify-workflows.sh` (exposé). **Décision** (session de livraison) : corriger par lot sans toucher au produit ; pas de refonte des 17 autres sans nécessité mesurée ; un contrôle de sources prévient la récidive. **Rejeté** : mesurer les durées de chaque harnais pour en déduire le risque (coût de plusieurs campagnes, pour une règle qui se lit dans les sources). **Limite** : une longue suite de petites requêtes passerait sous l'analyse.
+
+### `INC-371` — le contrôle de sources et la correction
+
+*2026-11-26, session `p2enjoy-crm-dd`.* **Rouge avant** : `jetons-harnais.test.ts` nomme `verify-workflows.sh` (`T_BIZDEV` ligne 693, après la reconstruction de la ligne 684) ; il aurait aussi nommé l'ancienne `verify-colonnes-protegees.sh` (`T_ADMIN`, lignes 473 et 484). **Vert après** : 24 tests (4 sur l'analyse, 20 sur les harnais). `verify-workflows.sh` redemande `T_BIZDEV` après sa reconstruction. **Reste** : le rejeu entier de `verify-workflows.sh` sous verrou.
