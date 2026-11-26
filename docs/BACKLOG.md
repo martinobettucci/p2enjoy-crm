@@ -21078,7 +21078,7 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 *Les preuves d'interface laissent des résidus de données ; rien ne les mesurait. Spécification : `docs/SPEC-test-harness.md` §3.11 ; fiche INC-142. Connecteur MCP : sans objet.*
 
 - [x] **INC-142 b — l'instrument** : `scripts/mesurer-residus.sh` (`relever`, `comparer`, `autour`), `scripts/verify-residus.sh` (8 contrôles verts). Mesuré : `administration-arborescence.spec.ts` ne laisse aucune ligne.
-- [ ] **INC-142 c — l'audit à la campagne complète** : jouer `scripts/mesurer-residus.sh autour -- <campagne>` à la prochaine campagne de la session de livraison, et corriger chaque suite nommée (purge par la clé de service dans son `finally`).
+- [~] **INC-142 c — l'audit à la campagne complète** (mesuré le 2026-11-26 : `move-card.spec.ts` laisse un point d'étape sur `…0c3` ; `remettre` à corriger — voir la fiche ; suites `manuel` et `ui` autres non mesurées) : jouer `scripts/mesurer-residus.sh autour -- <campagne>` à la prochaine campagne de la session de livraison, et corriger chaque suite nommée (purge par la clé de service dans son `finally`).
 
 ## Correctif — INC-247 (repris de la session 30, 2026-11-25)
 
