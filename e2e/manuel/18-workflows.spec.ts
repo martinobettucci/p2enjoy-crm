@@ -1,3 +1,5 @@
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T3b : l'arrivée par l'ancre `#checklist` (docs/DESIGN_SYSTEM.md §5.7 quinquies) ; l'image
+//       « checklist-de-l-affaire » est cadrée une fois le défilement doux terminé (manuel §18 ; docs/SPEC-checklists.md)
 // @spec CRM-133 (docs/BACKLOG.md) — tranche T4 : l'image de « Description de l'étape », sur « Négociation » surchargée par le
 //       seed (manuel §18 ; docs/SPEC-seed.md §39 ; docs/DESIGN_SYSTEM.md §5.15)
 // @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : la liste des champs porte ceux du seed (docs/SPEC-seed.md §38)
@@ -604,6 +606,11 @@ test('les checklists d’un workflow, les points qu’un chemin exige, et le ref
 	await bandeau.getByRole('link', { name: 'Cocher ces points' }).click()
 	const checklist = page.getByTestId('bloc-checklist-card')
 	await expect(checklist).toBeVisible()
+	// L'arrivée par l'ancre amène le bloc en vue par un défilement DOUX (`BlocChecklistCard`, §5.7 quinquies) et donne alors le
+	// focus au premier point à reprendre : mesuré en plein défilement, le bloc était hors de la fenêtre (« 796 à 1203 px pour
+	// 900 »). Le focus dit que l'arrivée est traitée ; le centrage instantané arrête le défilement et cadre le bloc.
+	await expect(checklist.locator('input[type="checkbox"]:focus')).toHaveCount(1)
+	await centrer(checklist)
 	await illustrer(page, { chapitre: CHAPITRE, section: S.checklists, nom: 'checklist-de-l-affaire', cibles: [checklist] })
 })
 

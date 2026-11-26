@@ -4,6 +4,7 @@
 //           `connecterAvecLeLabs`, seule porte d'entrée des specs d'interface
 // @verifies CRM-140 (docs/BACKLOG.md) — tranche T3 : `consommerTraceCadreIsole`, le seul message que l'instrumentation de
 //           Playwright fait journaliser par un cadre sans `allow-scripts` (docs/SPEC-mail-subsystem.md §30.3, §30.11)
+// @verifies CRM-161 (docs/BACKLOG.md) — la connexion n'est rendue qu'une fois la page d'arrivée au repos (docs/SPEC-espace-courant.md §2)
 // @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — `estUnCompte`, la forme d'un compte vue du navigateur
 
 import { expect, test as base, type Page, type Request } from '@playwright/test'
@@ -131,4 +132,8 @@ export async function connecterAvecLeLabs(
 	await page.locator('#password').fill(MOT_DE_PASSE_SEED)
 	await page.locator('#kc-login').click()
 	await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+	// `CRM-161` : la page d'arrivée (l'accueil, qui mesure le guide de démarrage) charge encore ses lectures quand l'en-tête
+	// paraît. Un scénario qui écoute alors le réseau pour une AUTRE page y captait ces lectures-là (« le premier URL
+	// `channels` » était le comptage de l'accueil) : la connexion n'est rendue qu'une fois la page d'arrivée au repos.
+	await page.waitForLoadState('networkidle')
 }

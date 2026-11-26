@@ -10,6 +10,7 @@
 // M1 le prouve à l'octet).
 // *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
 // le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
+// @verifies CRM-161 (docs/BACKLOG.md) — le clavier ouvre l'aide d'une inbox chargée : l'icône n'est focalisée qu'une fois les dossiers lus
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -65,6 +66,9 @@ test.describe('l’aide, pour une session', () => {
 
 	test('au clavier : l’icône s’ouvre, le focus entre, Échap le rend à l’icône', async ({ page }) => {
 		await page.goto('/p2enjoy/inbox')
+		// `CRM-161` : l'inbox charge encore ses dossiers quand la page est « chargée » ; une icône d'aide focalisée avant la fin
+		// du chargement perdait le focus au re-rendu, et Entrée ne l'ouvrait pas (relevé par la campagne du lot 411cfe37).
+		await expect(page.getByRole('heading', { name: 'Choisissez un dossier' })).toBeVisible()
 		await icone(page).focus()
 		await page.keyboard.press('Enter')
 		// L'inbox a son chapitre depuis le plan public (docs/SPEC-manual.md §10 bis) : le titre est lu dans ce chapitre.
