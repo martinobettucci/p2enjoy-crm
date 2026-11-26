@@ -477,6 +477,11 @@ la valeur du contrat, avant Docker (`runDev.sh`) et avant toute destruction (`re
 *Écrite le 2026-11-26, avant le code.* **Mesuré** (INC-370) : `PGRST303 « JWT expired »` — le jeton interne d'un script vaut 300 s au plus (`scripts/lib/sso.sh`) et un harnais le réemployait après deux reconstructions de la base.
 **La règle.** Un harnais qui garde un jeton obtenu par `sso_jeton_interne` ou `jeton_de` dans une variable du niveau haut le **redemande** après toute opération longue (`reconstruire_base_dev`, `rejouer_*`, `npm run build|e2e*|test:sql`, `playwright test`, construction d'image) avant de le réemployer. **Preuve** : `webapp/src/lib/jetons-harnais.test.ts` lit les harnais et refuse un jeton réemployé après une opération longue sans nouvelle affectation entre les deux ; il ne mesure pas les durées. Connecteur MCP : sans objet.
 
+### 3.19 La garde du build ne casse aucun build hors du poste — INC-372
+
+*Écrite le 2026-11-26, avant le code.* **Mesuré** : `npm run build` dans `node:24-alpine` (image de la livraison, `scripts/spark/livrer.sh`) échoue sur la garde `prebuild` d'INC-177 : pas de bash.
+**La règle.** La garde de `npm run build` (§3.9, seconde forme) protège le `webapp/dist` servi par une campagne ; elle ne vaut que sur le poste. Le script `prebuild` la lance **seulement si `bash` existe** ; sans bash, le build passe sans garde. **Preuve** : `scripts/verify-campagne.sh` joue `npm run prebuild` dans `node:24-alpine` (code 0, sans bash) et prouve que, sur le poste, la garde refuse toujours un build pendant qu'un aperçu est servi sous campagne. Connecteur MCP : sans objet.
+
 ## 4. Projets Playwright
 
 ### 4.1 Une seule configuration
