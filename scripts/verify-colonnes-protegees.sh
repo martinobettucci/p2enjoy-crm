@@ -132,9 +132,13 @@ COLONNES_OUVERTES="title, description, position, owner_id, amount, currency,
 	archived_at, deleted_at"
 
 RAPIDE=false
+# INC-368 (docs/SPEC-test-harness.md §3.17) : la section « Suites » ne rejoue que les specs Playwright de CETTE unité ; `--suites-completes` rétablit la suite entière.
+SUITES_COMPLETES=false
+SPECS_API_UNITE=(e2e/api/colonnes-protegees.spec.ts e2e/api/dates-lignes-protegees.spec.ts)
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--rapide) RAPIDE=true ;;
+		--suites-completes) SUITES_COMPLETES=true ;;
 		--help|-h) sed -n '2,48p' "$0"; exit 0 ;;
 		*) echo "option inconnue « $1 »." >&2; exit 1 ;;
 	esac
@@ -675,7 +679,12 @@ else
 	npm run typecheck >/dev/null 2>&1 && ok "npm run typecheck" || fail "npm run typecheck"
 	npm run types:check >/dev/null 2>&1 && ok "npm run types:check" || fail "npm run types:check"
 	npm run build >/dev/null 2>&1 && ok "npm run build" || fail "npm run build"
-	npm run e2e:api >/dev/null 2>&1 && ok "npm run e2e:api" || fail "npm run e2e:api"
+	if [ "$SUITES_COMPLETES" = true ]; then
+		npm run e2e:api >/dev/null 2>&1 && ok "npm run e2e:api" || fail "npm run e2e:api"
+	else
+		E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts --project=api "${SPECS_API_UNITE[@]}" >/dev/null 2>&1 \
+			&& ok "e2e:api, specs de l'unité (${#SPECS_API_UNITE[@]})" || fail "e2e:api, specs de l'unité : ${SPECS_API_UNITE[*]}"
+	fi
 fi
 
 titre "Résultat"

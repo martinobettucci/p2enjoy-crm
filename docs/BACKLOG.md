@@ -21133,10 +21133,12 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 *`verify-cards.sh` et `verify-colonnes-protegees.sh` rejouent à leur fin les suites entières : 63 et 27 minutes. Spécification : `docs/SPEC-test-harness.md` §3.17 ; fiche INC-368. Connecteur MCP : sans objet.*
 
-- [ ] **INC-368 — les deux harnais ne rejouent que les specs de leur unité** ; `--suites-completes` rétablit les suites entières ; preuve sur base fraîche sous verrou. `verify-harness.sh` reste joué seul sur base fraîche (décision de la session de livraison).
+- [~] **INC-368 — les deux harnais ne rejouent que les specs de leur unité** ; `--suites-completes` rétablit les suites entières ; preuve sur base fraîche sous verrou. `verify-harness.sh` reste joué seul sur base fraîche (décision de la session de livraison).
 
 ## Correctif — INC-369 (2026-11-26, demandé par la session de livraison)
 
 *`verify-board.sh` n'affiche rien de son rouge au rejeu final. Fiche INC-369. Connecteur MCP : sans objet.*
 
 - [x] **INC-369 — le rejeu final de `verify-board.sh` montre la cause de son rouge** ; harnais rejoué entier sous verrou, branche d'échec prouvée sur un journal factice.
+
+- [ ] **INC-370 — `verify-colonnes-protegees.sh` rend 401 au lieu de 403 après sa seconde reconstruction** (fiche INC-370) : rejouer, consigner le corps de la réponse, corriger la cause.

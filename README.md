@@ -519,6 +519,7 @@ le détenteur ; `CAMPAGNE_ATTENDRE=<secondes>` attend, `CAMPAGNE_FORCER=1` passe
 `--duree-max <s>` à l'ouverture), le dit, libère le verrou et rend 124 — un harnais qui pend ne gèle plus les autres sessions. Les constructions d'image des
 harnais sont bornées à part (`scripts/lib/borne.sh`, `VERIFY_BUILD_DELAI`, 1200 s par défaut) : un dépassement est nommé.
 Mécanisme : `docs/SPEC-test-harness.md` §3.9 et §3.16.
+**Harnais d'unité (INC-368)** : `verify-cards.sh` et `verify-colonnes-protegees.sh` ne rejouent à leur fin que les specs Playwright de leur unité (`SPECS_API_UNITE` en tête de fichier) ; `--suites-completes` rétablit `e2e:api` / `e2e:ui` entiers. `verify-harness.sh` reste joué seul, sur base fraîche. `docs/SPEC-test-harness.md` §3.17.
 
 Sur un poste NVM, exécuter d'abord `nvm use` comme indiqué au §3. Les commandes `npm run …`
 directes utilisent toujours la chaîne Node du shell courant. `scripts/verify-harness.sh`, lui,

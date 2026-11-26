@@ -42654,3 +42654,7 @@ correctifs).
 ### `INC-369` — fermeture
 
 *2026-11-26, session `p2enjoy-crm-dd`.* **Vérifié** : `verify-board.sh` rejoué entier sous verrou `dd-board` : 73 contrôles, aucune anomalie ; branche d'échec jouée sur un journal factice (FAIL, bilan, fin du journal, compte de fichiers modifiés). **Cause du rouge de la campagne : non établie**, non reproduite ; si elle revient, le harnais la montre maintenant.
+
+### `INC-368` — preuves sous verrou
+
+*2026-11-26, session `p2enjoy-crm-dd`.* sous verrou `dd-368`, base accumulée par la campagne — `verify-cards.sh` : **50 contrôles, aucune anomalie, 21 min 14 s** (63 min avant) ; `verify-colonnes-protegees.sh` : 59 contrôles verts, **1 en échec** — « après restauration, l'écriture rend encore 401 » (section 4, AVANT les suites ; sans rapport avec la correction, fiche INC-370) ; les deux sections « specs de l'unité » (3 et 2 specs) sont vertes. Contrôle de sources `webapp/src/lib/specs-unite.test.ts` : 4 tests verts. **Décision** : le code d'INC-368 est poussé, l'unité reste `[~]` jusqu'à un rejeu vert de `verify-colonnes-protegees.sh` ; le 401 est une fiche à part (INC-370), non masquée (§18).

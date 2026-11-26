@@ -1609,7 +1609,7 @@ recopie dans `docs/captures/` que sur demande — `CAPTURES_UNITES=<unité>[,<un
 de travail et un jeton hérité, les commandes qui partagent la pile (`test:sql`, `e2e:*`, le seed, la reconstruction, le build servi) ;
 `scripts/lib/campagne.sh ouvrir -- <commande>` ouvre une campagne en une fois. **Elle a une durée maximale** (INC-367, `docs/SPEC-test-harness.md` §3.16) :
 `CAMPAGNE_DUREE_MAX` (21 600 s par défaut, `--duree-max`), au-delà de laquelle l'arbre de la commande est arrêté, le verrou libéré, le code 124 rendu ; les
-constructions d'image des harnais passent par `borner` (`scripts/lib/borne.sh`, `VERIFY_BUILD_DELAI`).
+constructions d'image des harnais passent par `borner` (`scripts/lib/borne.sh`, `VERIFY_BUILD_DELAI`). Les harnais d'unité `verify-cards.sh` et `verify-colonnes-protegees.sh` ne rejouent que les specs de leur unité (INC-368, §3.17) ; `--suites-completes` rétablit les suites entières.
 Le harnais consolidé valide avant toute mutation un couple Node Linux conforme à `.nvmrc` ; si le
 `PATH` hérité de WSL ne présente que `npm.exe`, il sélectionne une installation NVM locale sans
 modifier le shell parent, ou refuse l'exécution avec une consigne explicite (décision 278).

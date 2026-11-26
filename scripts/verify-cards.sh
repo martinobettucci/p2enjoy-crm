@@ -120,9 +120,15 @@ MAIL_BIZDEV=bizdev@p2enjoy.test
 MAIL_VIEWER=viewer@p2enjoy.test
 
 RAPIDE=false
+# INC-368 (docs/SPEC-test-harness.md §3.17) : la section « Suites » ne rejoue que les specs Playwright de CETTE unité. Une suite entière sur une base
+# que la campagne a déjà accumulée coûtait 63 minutes et ne disait rien de l'unité (INC-246) ; `--suites-completes` la rétablit, pour un jeu isolé sur base fraîche.
+SUITES_COMPLETES=false
+SPECS_API_UNITE=(e2e/api/cards.spec.ts e2e/api/entete-card-ecriture.spec.ts e2e/api/move-card.spec.ts)
+SPECS_UI_UNITE=() # CRM-040 ne livre aucun écran
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--rapide) RAPIDE=true ;;
+		--suites-completes) SUITES_COMPLETES=true ;;
 		--help|-h) sed -n '2,45p' "$0"; exit 0 ;;
 		*) echo "option inconnue « $1 »." >&2; exit 1 ;;
 	esac
@@ -710,8 +716,17 @@ else
 	npm run typecheck >/dev/null 2>&1 && ok "npm run typecheck" || fail "npm run typecheck"
 	npm run types:check >/dev/null 2>&1 && ok "npm run types:check" || fail "npm run types:check"
 	npm run build >/dev/null 2>&1 && ok "npm run build" || fail "npm run build"
-	npm run e2e:api >/dev/null 2>&1 && ok "npm run e2e:api" || fail "npm run e2e:api"
-	npm run e2e:ui >/dev/null 2>&1 && ok "npm run e2e:ui" || fail "npm run e2e:ui"
+	if [ "$SUITES_COMPLETES" = true ]; then
+		npm run e2e:api >/dev/null 2>&1 && ok "npm run e2e:api" || fail "npm run e2e:api"
+		npm run e2e:ui >/dev/null 2>&1 && ok "npm run e2e:ui" || fail "npm run e2e:ui"
+	else
+		E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts --project=api "${SPECS_API_UNITE[@]}" >/dev/null 2>&1 \
+			&& ok "e2e:api, specs de l'unité (${#SPECS_API_UNITE[@]})" || fail "e2e:api, specs de l'unité : ${SPECS_API_UNITE[*]}"
+		if [ "${#SPECS_UI_UNITE[@]}" -gt 0 ]; then
+			E2E_PROJETS=ui npx playwright test --config e2e/playwright.config.ts --project=ui "${SPECS_UI_UNITE[@]}" >/dev/null 2>&1 \
+				&& ok "e2e:ui, specs de l'unité (${#SPECS_UI_UNITE[@]})" || fail "e2e:ui, specs de l'unité : ${SPECS_UI_UNITE[*]}"
+		fi
+	fi
 fi
 
 titre "Résultat"
