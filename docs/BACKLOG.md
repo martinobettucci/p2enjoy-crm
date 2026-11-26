@@ -21171,7 +21171,7 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 *`verify-workflows.sh` : comptage de triggers périmé ; suites entières sous verrou (62 min). Spécification : `docs/SPEC-test-harness.md` §3.17 ; fiche INC-373. Connecteur MCP : sans objet.*
 
-- [ ] **INC-373 — `verify-workflows.sh` nomme les quatre triggers du catalogue et ne rejoue que les specs de son unité** (`--suites-completes` pour l'entier) ; preuve : contrôle de sources étendu, harnais rejoué entier sous verrou.
+- [x] **INC-373 — `verify-workflows.sh` nomme les quatre triggers du catalogue et ne rejoue que les specs de son unité** (`--suites-completes` pour l'entier) ; preuve : contrôle de sources étendu, harnais rejoué entier sous verrou.
 
 ## Diagnostic — la famille Kong → fonctions : INC-311 et INC-292 (demandé par la session de livraison, 2026-11-26)
 

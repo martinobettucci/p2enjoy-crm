@@ -8,7 +8,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-const HARNAIS = ['scripts/verify-cards.sh', 'scripts/verify-colonnes-protegees.sh'] as const
+const HARNAIS = ['scripts/verify-cards.sh', 'scripts/verify-colonnes-protegees.sh', 'scripts/verify-workflows.sh'] as const
 
 /** Les éléments d'un tableau bash `NOM=(a b c)` d'une ligne. */
 function tableau(texte: string, nom: string): string[] | null {

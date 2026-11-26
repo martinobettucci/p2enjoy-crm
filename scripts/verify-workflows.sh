@@ -50,6 +50,7 @@
 # Usage :
 #   scripts/verify-workflows.sh
 #   scripts/verify-workflows.sh --rapide   n'exécute pas les suites Playwright ni le build
+#   scripts/verify-workflows.sh --suites-completes   rejoue `e2e:api` et `e2e:ui` ENTIERS (INC-373), au lieu des seules specs de l'unité
 
 set -euo pipefail
 
@@ -88,10 +89,16 @@ MAIL_VIEWER=viewer@p2enjoy.test
 WS_PREUVE=a4440000-0000-4000-8000-000000000001
 
 RAPIDE=false
+# INC-373 (docs/SPEC-test-harness.md §3.17) : la section « Suites » ne rejoue que les specs Playwright de CETTE unité. Les suites entières coûtaient plus de 60 minutes sous le
+# verrou de campagne ; `--suites-completes` les rétablit, pour un jeu isolé sur base fraîche.
+SUITES_COMPLETES=false
+SPECS_API_UNITE=(e2e/api/workflows.spec.ts)
+SPECS_UI_UNITE=(e2e/ui/administration-workflows.spec.ts)
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--rapide) RAPIDE=true ;;
-		--help|-h) sed -n '2,52p' "$0"; exit 0 ;;
+		--suites-completes) SUITES_COMPLETES=true ;;
+		--help|-h) sed -n '2,53p' "$0"; exit 0 ;;
 		*) echo "option inconnue « $1 »." >&2; exit 1 ;;
 	esac
 	shift
@@ -358,8 +365,10 @@ titre "4. Le seed est convergent"
 # workflows — le global par défaut de cette unité, et la copie de portée `track` du §4.10. Le
 # contrôle est **resserré** sur ce que `CRM-031` garantit réellement — un seul workflow `global` —
 # plutôt que relâché sur un total qui changera à chaque copie livrée par le seed.
-workflows=$(psql_db -c "select count(*) from public.workflows
-                         where workspace_id = '$WS_SEED' and scope = 'global';")
+# INC-373 : le seed porte DEUX workflows globaux — le standard (par défaut) et « Cycle commercial — checklists » (`…c6801`, docs/SPEC-seed.md §28.1) ; ils sont NOMMÉS
+# par leur identifiant de seed, ce qui met le contrôle à l'abri d'un workflow global qu'une preuve aurait laissé.
+workflows=$(psql_db -c "select string_agg(id::text, ',' order by id) from public.workflows
+                         where workspace_id = '$WS_SEED' and scope = 'global' and id::text like '5eed0000-%';")
 etapes=$(psql_db -c "select count(*) from public.workflow_steps where workflow_id = '$WF_SEED';")
 transitions=$(psql_db -c "select count(*) from public.workflow_transitions
                            where workflow_id = '$WF_SEED';")
@@ -393,8 +402,9 @@ exigences=$(psql_db -c "select count(*) from public.workflow_transition_required
                          join public.workflow_transitions t on t.id = trf.transition_id
                         where t.workflow_id = '$WF_SEED';")
 
-[ "$workflows" = "1" ] && ok "un workflow **global**, ni plus ni moins" \
-	|| fail "workflows globaux : $workflows, attendu 1"
+GLOBAUX_SEED="$WF_SEED,5eed0000-0000-4000-8000-0000000c6801"
+[ "$workflows" = "$GLOBAUX_SEED" ] && ok "deux workflows **globaux** dans le seed : le standard et « checklists », ni plus ni moins" \
+	|| fail "workflows globaux du seed : « $workflows », attendu « $GLOBAUX_SEED »"
 [ "$defaut" = "1" ] && ok "il est le workflow **par défaut** du workspace" \
 	|| fail "workflows par défaut : $defaut, attendu 1"
 [ "$etapes" = "7" ] && ok "sept étapes, une par nœud actif du catalogue" \
@@ -489,12 +499,14 @@ else
 	fail "INC-031 : \`cards\` introuvable (« $cards ») alors que \`CRM-040\` la déclare livrée"
 fi
 
-triggers=$(psql_db -c "select count(*) from pg_trigger
+# INC-373 : les triggers sont NOMMÉS, non comptés — un comptage périmé (le journal d'audit en a ajouté un) ne dit plus rien de la garde d'archivage qu'il cite.
+triggers=$(psql_db -c "select string_agg(tgname, ',' order by tgname) from pg_trigger
                         where tgrelid = 'public.workflow_nodes_catalog'::regclass
                           and not tgisinternal;")
-[ "$triggers" = "3" ] \
-	&& ok "trois triggers sur le catalogue : \`updated_at\`, \`position\`, et la garde d'archivage" \
-	|| fail "triggers du catalogue : $triggers, attendu 3"
+ATTENDUS="workflow_nodes_catalog_attribuer_position,workflow_nodes_catalog_audit,workflow_nodes_catalog_refuser_archivage_occupe,workflow_nodes_catalog_set_updated_at"
+[ "$triggers" = "$ATTENDUS" ] \
+	&& ok "quatre triggers nommés sur le catalogue : \`updated_at\`, \`position\`, la garde d'archivage, et le journal d'audit" \
+	|| fail "triggers du catalogue : « $triggers », attendu « $ATTENDUS »"
 
 garde=$(psql_db -c "select count(*) from pg_trigger
                      where tgrelid = 'public.workflow_nodes_catalog'::regclass
@@ -708,8 +720,15 @@ else
 	npm run typecheck >/dev/null 2>&1 && ok "npm run typecheck" || fail "npm run typecheck"
 	npm run types:check >/dev/null 2>&1 && ok "npm run types:check" || fail "npm run types:check"
 	npm run build >/dev/null 2>&1 && ok "npm run build" || fail "npm run build"
-	npm run e2e:api >/dev/null 2>&1 && ok "npm run e2e:api" || fail "npm run e2e:api"
-	npm run e2e:ui >/dev/null 2>&1 && ok "npm run e2e:ui" || fail "npm run e2e:ui"
+	if [ "$SUITES_COMPLETES" = true ]; then
+		npm run e2e:api >/dev/null 2>&1 && ok "npm run e2e:api" || fail "npm run e2e:api"
+		npm run e2e:ui >/dev/null 2>&1 && ok "npm run e2e:ui" || fail "npm run e2e:ui"
+	else
+		E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts --project=api "${SPECS_API_UNITE[@]}" >/dev/null 2>&1 \
+			&& ok "e2e:api, specs de l'unité (${#SPECS_API_UNITE[@]})" || fail "e2e:api, specs de l'unité : ${SPECS_API_UNITE[*]}"
+		E2E_PROJETS=ui npx playwright test --config e2e/playwright.config.ts --project=ui "${SPECS_UI_UNITE[@]}" >/dev/null 2>&1 \
+			&& ok "e2e:ui, specs de l'unité (${#SPECS_UI_UNITE[@]})" || fail "e2e:ui, specs de l'unité : ${SPECS_UI_UNITE[*]}"
+	fi
 fi
 
 titre "Résultat"
