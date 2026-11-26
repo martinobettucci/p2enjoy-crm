@@ -42696,6 +42696,11 @@ observées (Pilotage et saisie de tous les espaces, fuseau, Pilotage à 390 px),
 **Lecture de la production avant** (§2.81 geste 1, lecture seule) : 0 couple personne × jour au-delà de 420 minutes ; registre à
 200 (`0202`) ; un seul espace. **Sauvegarde** : `sauvegardes/avant-0203-20261126T044710Z.dump` dans la cellule (7,3 Mo, 3627
 entrées à `pg_restore --list`).
+**Exécutée** le 2026-11-26 au matin : un premier essai à `67eb7d6e` s'est arrêté au build de la webapp dans la cellule, avant toute
+écriture (la garde `prebuild` d'INC-177 exigeait `bash`, absent de `node:24-alpine` ; INC-372, corrigée par dd en `66a7bb3a`) ; la
+fenêtre a livré `66a7bb3a` : migrations 203, 204 et 206 (registre à 203), webapp bâtie dans la cellule (`index-dPS-0TXh.js`),
+image `mcp` reconstruite (saine), manuel publié (608 fichiers) ; `verifier.sh --revision` 35/36 (le redémarrage unique de
+`realtime`, antérieur à la fenêtre, INC-277). Contrat §2.81 à §2.86 et §8, changelog, backlog à jour ; le constat du responsable reste à faire.
 
 ### `INC-370` et `INC-368` — fermeture
 

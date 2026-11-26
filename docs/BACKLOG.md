@@ -20478,6 +20478,7 @@ campagne complète revient à la session de livraison (décision 830).
 **Le socle de T3.a livré le 2026-11-24 au soir** (le filtre « Espace » et la provenance sur « Affaires figées », `3aad259d` ; décision 987, révision `3e0bdc47`).
 **T3.b livrée le 2026-11-24, tard** (Rentabilité, Coûts, Ma journée, le carnet, les objectifs, la cloche, la recherche ; le formulaire d'un contact borné à son espace ; décision 988, révision `ff2804ee`).
 **T3.c livrée le 2026-11-25 au soir** (les migrations 201 et 202, l'onglet Organisations et Temps ▸ Rapport de tous les espaces ; décision 993, révision `e550be2d`).
+**T3.d à T5 livrées le 2026-11-26 au matin** (la migration 203, le plafond journalier tous espaces ; le Pilotage, la saisie et le rapport de temps de tous les espaces ; le connecteur ; le manuel ; décision 1003, révision `66a7bb3a`) ; reste le constat du responsable.
 *Prise en charge : session interactive 4891a451 (p2enjoy-crm-ef, ex-5f) depuis 2026-11-24 06:41 UTC — état avant : [~] ; T3 à T5,
 confiées par la session de livraison (96)*
 

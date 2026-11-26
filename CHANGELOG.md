@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-26 au matin — les migrations 203, 204 et 206, la webapp, l'image `mcp`, le runner et le manuel
+
+Cellule Spark `crm`, révision `66a7bb3a` (décision 1003, un `pg_dump -Fc` avant). **Vérifié** : registre à 203 lignes ;
+`index-dPS-0TXh.js` servi ; `mcp` reconstruite, saine ; `verifier.sh` 35/36 (`realtime`, un redémarrage antérieur à la fenêtre) ;
+manuel publié (608 fichiers). Le constat du responsable reste à faire (contrat §2.81 à §2.86).
+
 - **INC-372, le build ne dépend plus de bash** : la garde `prebuild` d'INC-177 (verrou de campagne) n'est lancée que si `bash` existe ; le build de la livraison dans `node:24-alpine` n'est plus interrompu. Outillage de développement.
 - **INC-370, `verify-colonnes-protegees.sh` redemande ses jetons** après chaque reconstruction de la base (le jeton interne d'un script vaut 300 s) ; INC-371 : même correction pour `verify-workflows.sh` et contrôle de sources contre la récidive. Outillage de développement : rien ne change dans le produit livré.
 - **INC-368, les harnais d'unité ne rejouent que les specs de leur unité** : `verify-cards.sh` et `verify-colonnes-protegees.sh` ne relancent plus les suites `e2e` entières (`verify-cards.sh` : 63 min → 21 min) ; `--suites-completes` les rétablit. Outillage de développement : rien ne change dans le produit livré.
@@ -90,8 +100,6 @@ d'exécuter le code attendu.
   temps propose les membres de tous les espaces administrés. **Le plafond de 7 heures par jour compte désormais tous les
   espaces de la personne** (migration 203) : un refus ne dit ni les heures déjà saisies ni l'espace. Rien ne change pour une
   personne d'un seul espace. Le manuel (chapitres 28 et 30) le décrit.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-25 au soir — les migrations 201 et 202, la webapp et le manuel
 
